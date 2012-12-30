@@ -1,0 +1,12 @@
+{
+    "name": "tt-bot",
+    "engines": {
+        "node": ">= 0.4.0"
+    },
+    "dependencies": {
+        "ttapi": "*",
+        "request": "*",
+        "xml2js": ">= 0.1.13",
+        "mysql": "*"
+    }
+}
