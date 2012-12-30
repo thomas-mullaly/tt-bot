@@ -1,14 +1,7 @@
 (function () {
-    var fs = require("fs");
-    var Bot = require("ttapi");
-    var config = JSON.parse(fs.readFileSync('config.json', 'ascii'));
+    var TTBot = require("./bot/TTBot.js");
 
-    var bot = new Bot(config.bot.credentials.auth, config.bot.credentials.userid, config.bot.roomid);
-
-    bot.on('speak', function (data) {
-        // Respond to "/hello" command
-        if (data.text.match(/^\/hello$/)) {
-            bot.speak('Hey! How are you @'+data.name+' ?');
-        }
-    });
+    var bot = new TTBot(__dirname);
+    bot.initialize();
+    bot.run();
 }).call(this);
