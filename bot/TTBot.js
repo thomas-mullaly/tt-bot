@@ -4,12 +4,14 @@
     var TTApi = require("ttapi");
     var util = require("./Utils.js");
     var StatsModule = require("./modules/StatsModule.js");
+    var CommandsModule = require("./modules/CommandsModule.js");
 
     var TTBot = function (projectDir) {
         this.config = null;
         this.ttApi = null;
         this.PROJECT_DIR = projectDir;
         this.statsModule = null;
+        this.commandsModule = null;
     };
 
     TTBot.prototype.initialize = function () {
@@ -29,8 +31,8 @@
     };
 
     TTBot.prototype._loadModules = function () {
-        console.log(StatsModule);
         this.statsModule = new StatsModule(this.ttApi, util);
+        this.commandsModule = new CommandsModule(this.ttApi, util);
     };
 
     TTBot.prototype.getTTApi = function () {
