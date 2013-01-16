@@ -5,10 +5,16 @@
         this.ttApi = ttApi;
 
         ttApi.on("speak", utils.proxy(this, this.onChatMessageRecieved));
+        ttApi.on("pmmed", utils.proxy(this, this.onPrivateMessageRecieved));
     };
 
     CommandsModule.prototype.onChatMessageRecieved = function (data) {
-        this.ttApi.speak("Got message");
+        console.log(data);
+        //this.ttApi.speak("Got message");
+    };
+
+    CommandsModule.prototype.onPrivateMessageRecieved = function (data) {
+        console.log(data);
     };
 
     module.exports = CommandsModule;
