@@ -3,6 +3,7 @@
 
     var CommandsModule = function (ttApi, utils) {
         this.ttApi = ttApi;
+        this.commandHandlers = [];
 
         ttApi.on("speak", utils.proxy(this, this.onChatMessageRecieved));
         ttApi.on("pmmed", utils.proxy(this, this.onPrivateMessageRecieved));
@@ -15,6 +16,10 @@
 
     CommandsModule.prototype.onPrivateMessageRecieved = function (data) {
         console.log(data);
+    };
+
+    CommandsModule.prototype.registerCommandHandler = function (commandHandlerInfo, callback) {
+        this.commandHandlers.push({ commandInfo: commandHandlerInfo, callback: callback });
     };
 
     module.exports = CommandsModule;
