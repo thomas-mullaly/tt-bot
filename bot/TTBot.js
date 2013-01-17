@@ -20,10 +20,13 @@
     };
 
     TTBot.prototype.run = function () {
+        var self = this;
         var botConfig = this.config.bot;
         this.ttApi = new TTApi(botConfig.credentials.auth, botConfig.credentials.userid, botConfig.roomid);
 
-        this._loadModules();
+        this.ttApi.on("ready", function () {
+            self._loadModules();
+        });
     };
 
     TTBot.prototype._loadEventHandlers = function () {
@@ -32,7 +35,7 @@
 
     TTBot.prototype._loadModules = function () {
         this.statsModule = new StatsModule(this.ttApi, util);
-        this.commandsModule = new CommandsModule(this.ttApi, util);
+        this.commandsModule = new CommandsModule(this.ttApi, util, this.config);
     };
 
     TTBot.prototype.getTTApi = function () {
