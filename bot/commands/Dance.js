@@ -15,6 +15,6 @@
         commandsModule.registerCommandHandler({ botSpecific: true, command: "bop" },
             utils.proxy(danceCommandHandler, danceCommandHandler.bop));
         commandsModule.registerCommandHandler({ botSpecific: true, command: "dance" },
-            utils.proxy(danceCommandHandler, danceCommandHandler.parrot));
+            utils.proxy(danceCommandHandler, danceCommandHandler.bop));
     }
 })();
