@@ -9,6 +9,7 @@
         this.botCommandPrefix = '/' + config.bot.name;
         this.commandsDirectory = __dirname + "/./../commands";
         this.utils = utils;
+        this.botUserId = config.bot.credentials.userid;
 
         this._loadCommandHandlers();
 
@@ -18,7 +19,11 @@
 
     CommandsModule.prototype.onChatMessageRecieved = function (data) {
         console.log(data);
-        this._processMessage(data);
+
+        // Don't listen to messages from ourself.
+        if (data.userif !== this.botUserId) {
+            this._processMessage(data);
+        }
     };
 
     CommandsModule.prototype.onPrivateMessageRecieved = function (data) {
