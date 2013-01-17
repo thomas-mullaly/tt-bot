@@ -21,7 +21,7 @@
         console.log(data);
 
         // Don't listen to messages from ourself.
-        if (data.userif !== this.botUserId) {
+        if (data.userid !== this.botUserId) {
             this._processMessage(data);
         }
     };
