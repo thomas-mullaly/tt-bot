@@ -29,9 +29,10 @@
     };
 
     CommandsModule.prototype._createCommandData = function (messageData, parameters) {
+        var userId = messageData.senderid ? messageData.senderid : messageData.userid;
         return {
             type: messageData.command,
-            userId: messageData.userid,
+            userId: userId,
             roomId: messageData.roomid,
             message: messageData.text,
             parameters: parameters
