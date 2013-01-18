@@ -12,5 +12,5 @@ logs
 results
 
 npm-debug.log
-config.json
+bot.json
 node_modules/
