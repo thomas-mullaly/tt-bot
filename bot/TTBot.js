@@ -5,6 +5,7 @@
     var util = require("./Utils.js");
     var StatsModule = require("./modules/StatsModule.js");
     var CommandsModule = require("./modules/CommandsModule.js");
+    var underscore = require("underscore");
 
     var TTBot = function (projectDir) {
         this.config = null;
@@ -17,6 +18,9 @@
     TTBot.prototype.initialize = function () {
         var fs = require("fs");
         this.config = JSON.parse(fs.readFileSync(this.PROJECT_DIR + '/config.json', 'ascii'));
+        var botConfig = JSON.parse(fs.readFileSync(this.PROJECT_DIR + '/bot.json', 'ascii'));
+
+        underscore.extend(this.config, botConfig);
     };
 
     TTBot.prototype.run = function () {

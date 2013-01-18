@@ -8,6 +8,7 @@
         "ttapi": "*",
         "request": "*",
         "xml2js": ">= 0.1.13",
-        "mysql": "*"
+        "mysql": "*",
+        "underscore": "*"
     }
 }
