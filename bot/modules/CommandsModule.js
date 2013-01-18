@@ -9,7 +9,7 @@
         this.botCommandPrefix = '/' + config.bot.name;
         this.commandsDirectory = __dirname + "/./../commands";
         this.utils = utils;
-        this.botUserId = config.bot.credentials.userid;
+        this.botConfig = config;
 
         this._loadCommandHandlers();
 
@@ -21,7 +21,7 @@
         //console.log(data);
 
         // Don't listen to messages from ourself.
-        if (data.userid !== this.botUserId) {
+        if (data.userid !== this.botConfig.bot.credentials.userid) {
             this._processMessage(data);
         }
     };
@@ -47,7 +47,7 @@
             for (var i = 0; i < files.length; ++i) {
                 if ((/\.js$/).test(files[i])) {
                     var commandHandler = require(self.commandsDirectory + '/' + files[i]);
-                    commandHandler.attachCommandHandler(self, self.ttApi, self.utils);
+                    commandHandler.attachCommandHandler(self, self.ttApi, self.botConfig);
                 }
             }
         });
@@ -60,7 +60,7 @@
                 var command = this.botCommandPrefix + ' ' + commandHandler.info.command;
                 if (data.text.toLowerCase().indexOf(command.toLowerCase()) === 0) {
                     var parameters = data.text.substring(command.length);
-                    commandHandler.callback(this._createCommandData(data, parameters));
+                    commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
                 }
             }
         }
