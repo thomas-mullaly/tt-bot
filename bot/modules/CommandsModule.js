@@ -18,8 +18,6 @@
     };
 
     CommandsModule.prototype.onChatMessageRecieved = function (data) {
-        console.log(data);
-
         // Don't listen to messages from ourself.
         if (data.userid !== this.botConfig.bot.credentials.userid) {
             this._processMessage(data);
@@ -27,7 +25,6 @@
     };
 
     CommandsModule.prototype.onPrivateMessageRecieved = function (data) {
-        console.log(data);
         this._processMessage(data);
     };
 
