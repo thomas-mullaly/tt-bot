@@ -1,0 +1,11 @@
+{
+    "bot": {
+        "credentials": {
+            "auth": "xxxxxxxxxxxxxxxxxxxxxxxx",
+            "userid": "xxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "name": "bert2",
+        "roomid": "xxxxxxxxxxxxxxxxxxxxxxxx",
+        "admin": "xxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+}
