@@ -5,6 +5,10 @@
         {"name": "narwhal", "response":"I am a beautiful sea unicorn!"},
         {"name": "it's business time!", "response": "I know what you're trying to say, you're trying to say it's time for business. it's business time. ooh!"},
         {"name": "mosh", "response": "BRUTAL, DUDE!!! :metal:"},
-        {"name": "drop the bass", "response": "What, This one? :fish:"}
+        {"name": "drop the bass", "response": "What, This one? :fish:"},
+	{"name": "drop it", "response": "Ooh it's hot!"},
+	{"name": "hammer time", "response": "You can't touch this!"},
+	{"name": "disco", "response": "You should be daaancing, yeah!"},
+	{"name": "moonwalk", "response":"Billie Jean is not my lover!"}
     ]
 }
