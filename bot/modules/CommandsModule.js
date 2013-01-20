@@ -55,12 +55,20 @@
     CommandsModule.prototype._processMessage = function (data) {
         for (var i = 0; i < this.commandHandlers.length; ++i) {
             var commandHandler = this.commandHandlers[i];
-            if (commandHandler.info.botSpecific) {
-                var command = this.botCommandPrefix + ' ' + commandHandler.info.command;
-                if (data.text.toLowerCase().indexOf(command.toLowerCase()) === 0) {
-                    var parameters = data.text.substring(command.length);
-                    commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
-                }
+
+            var command = '/';
+
+            // Only append the bot name if it's a bot specific command and the message
+            // came from the the chat.
+            if (commandHandler.info.botSpecific && data.command === 'speak') {
+                command += this.botConfig.bot.name + ' ';
+            }
+
+            command += commandHandler.info.command;
+
+            if (data.text.toLowerCase().indexOf(command.toLowerCase()) === 0) {
+                var parameters = data.text.substring(command.length);
+                commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
             }
         }
     };
