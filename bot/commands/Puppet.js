@@ -7,6 +7,7 @@
 
     exports.attachCommandHandler = function (commandsModule, ttApi, botConfig) {
         commandsModule.registerCommandHandler({ botSpecific: true, command: "puppet" }, puppet);
+        commandsModule.registerCommandHandler({ botSpecific: true, command: "p"}, puppet);
     };
 
 })();
