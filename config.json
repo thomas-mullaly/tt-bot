@@ -1,14 +1,23 @@
 {
     "dance_aliases": [
-        {"name": "bop", "response": null},
-        {"name": "dance", "response":null},
-        {"name": "narwhal", "response":"I am a beautiful sea unicorn!"},
-        {"name": "it's business time!", "response": "I know what you're trying to say, you're trying to say it's time for business. it's business time. ooh!"},
-        {"name": "mosh", "response": "BRUTAL, DUDE!!! :metal:"},
-        {"name": "drop the bass", "response": "What, This one? :fish:"},
-	{"name": "drop it", "response": "Ooh it's hot!"},
-	{"name": "hammer time", "response": "You can't touch this!"},
-	{"name": "disco", "response": "You should be daaancing, yeah!"},
-	{"name": "moonwalk", "response":"Billie Jean is not my lover!"}
+        {"name": "bop", "responseType": "none", "responseData": null},
+        {"name": "dance", "responseType": "none", "responseData": null},
+        {"name": "narwhal", "responseType": "single", "responseData": "I am a beautiful sea unicorn!"},
+        {"name": "it's business time!", "responseType": "single", "responseData": "I know what you're trying to say, you're trying to say it's time for business. it's business time. ooh!"},
+        {"name": "mosh", "responseType": "single", "responseData": "BRUTAL, DUDE!!! :metal:"},
+        {"name": "drop the bass", "responseType": "single", "responseData": "What, This one? :fish:"},
+        {"name": "drop it", "responseType": "single", "responseData": "Ooh it's hot!"},
+        {"name": "hammer time", "responseType": "single", "responseData": "You can't touch this!"},
+        {"name": "disco", "responseType": "single", "responseData": "You should be daaancing, yeah!"},
+        {
+            "name": "moonwalk",
+            "responseType": "random",
+            "responseData": [
+                "Billie Jean is not my lover!",
+                "Annie are you okay?",
+                "If you wanna be my baby, it don't matter if you're black or white.",
+                "You've been hit by, you've been struck by a smooth criminal."
+            ]
+        }
     ]
 }

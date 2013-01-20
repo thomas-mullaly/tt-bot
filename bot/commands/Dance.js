@@ -1,10 +1,14 @@
 (function () {
     "use strict";
 
-    var bop = function (data, ttApi, msg) {
+    var bop = function (data, ttApi, responseInfo) {
         ttApi.bop();
-        if (msg !== null) {
-            ttApi.speak(msg);
+
+        if (responseInfo.responseType === 'single' && responseInfo.responseData !== null) {
+            ttApi.speak(responseInfo.responseData);
+        } else if (responseInfo.responseType === 'random' && typeof responseInfo.responseData === 'object') {
+            var responseIndex = Math.floor(Math.random() * responseInfo.responseData.length);
+            ttApi.speak(responseInfo.responseData[responseIndex]);
         }
     };
 
@@ -14,7 +18,7 @@
             danceAliases.forEach(function (value) {
                 commandsModule.registerCommandHandler({ botSpecific: true, command: value.name},
                     function (data, ttApi) {
-                        bop(data, ttApi, value.response);
+                        bop(data, ttApi, value);
                     });
             });
         } else {
