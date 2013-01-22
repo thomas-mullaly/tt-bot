@@ -32,6 +32,7 @@
         this.ttApi = new TTApi(botConfig.credentials.auth, botConfig.credentials.userid, botConfig.roomid);
 
         this.ttApi.on("ready", function () {
+            console.log(arguments);
             self._loadModules();
         });
     };
@@ -43,7 +44,7 @@
     TTBot.prototype._loadModules = function () {
         this.statsModule = new StatsModule(this.ttApi, util);
         this.commandsModule = new CommandsModule(this.ttApi, util, this.config);
-        this.roomManagementModule = new RoomManagementModule(this.ttApi);
+        this.roomManagementModule = new RoomManagementModule(this.ttApi, this.config);
     };
 
     TTBot.prototype.getTTApi = function () {
