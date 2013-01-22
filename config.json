@@ -18,6 +18,7 @@
                 "If you wanna be my baby, it don't matter if you're black or white.",
                 "You've been hit by, you've been struck by a smooth criminal."
             ]
-        }
+        },
+        {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"}
     ]
 }
