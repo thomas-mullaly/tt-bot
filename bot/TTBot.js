@@ -37,14 +37,10 @@
         });
     };
 
-    TTBot.prototype._loadEventHandlers = function () {
-
-    };
-
     TTBot.prototype._loadModules = function () {
         this.statsModule = new StatsModule(this.ttApi, util);
-        this.commandsModule = new CommandsModule(this.ttApi, util, this.config);
         this.roomManagementModule = new RoomManagementModule(this.ttApi, this.config);
+        this.commandsModule = new CommandsModule(this.ttApi, this.roomManagementModule, util, this.config);
     };
 
     TTBot.prototype.getTTApi = function () {

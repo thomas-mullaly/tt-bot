@@ -3,13 +3,14 @@
 
     var fs = require("fs");
 
-    var CommandsModule = function (ttApi, utils, config) {
+    var CommandsModule = function (ttApi, roomManagementModule, utils, config) {
         this.ttApi = ttApi;
         this.commandHandlers = [];
         this.botCommandPrefix = '/' + config.bot.name;
         this.commandsDirectory = __dirname + "/./../commands";
         this.utils = utils;
         this.botConfig = config;
+        this._roomManagementModule = roomManagementModule;
 
         this._loadCommandHandlers();
 
@@ -30,9 +31,11 @@
 
     CommandsModule.prototype._createCommandData = function (messageData, parameters) {
         var userId = messageData.senderid ? messageData.senderid : messageData.userid;
+        var userName = messageData.name ? messageData.name : this._roomManagementModule.currentListeners()[userId].userName;
         return {
             type: messageData.command,
             userId: userId,
+            userName: userName,
             roomId: messageData.roomid,
             message: messageData.text,
             parameters: parameters
@@ -75,6 +78,10 @@
 
     CommandsModule.prototype.registerCommandHandler = function (commandHandlerInfo, callback) {
         this.commandHandlers.push({ info: commandHandlerInfo, callback: callback });
+    };
+
+    CommandsModule.prototype.roomManagementModule = function () {
+        return this._roomManagementModule;
     };
 
     module.exports = CommandsModule;

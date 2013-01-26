@@ -16,6 +16,8 @@
         this.ttApi = ttApi;
         this._currentDjs = {};
         this._currentListeners = {};
+        this._currentSong = {};
+        this._moderatorIds = [];
         this._botConfig = botConfig;
 
         this._registerToTTEvents();
@@ -27,30 +29,44 @@
         this.ttApi.once("roomChanged", utils.proxy(this, this._onBotEnteredRoom));
         this.ttApi.on("add_dj", utils.proxy(this, this._onDJAdded));
         this.ttApi.on("rem_dj", utils.proxy(this, this._onDJRemoved));
-        this.ttApi.on("registered", utils.proxy(this, this._onDJJoined));
-        this.ttApi.on("deregistered", utils.proxy(this, this._onDJLeft));
+        this.ttApi.on("registered", utils.proxy(this, this._onListenerJoined));
+        this.ttApi.on("deregistered", utils.proxy(this, this._onListenerLeft));
+        this.ttApi.on("endsong", utils.proxy(this, this._onSongEnded));
+    };
+
+    RoomManagementModule.prototype._onSongEnded = function (data) {
+        //console.log(data);
+        this.emit("songEnded")
     };
 
     RoomManagementModule.prototype._onBotEnteredRoom = function (data) {
         var self = this;
 
-        data.users.forEach(function (value) {
-            console.log(value);
-            self._currentListeners[value.userid] = createDjModel(value);
+        data.room.metadata.moderator_id.forEach(function (value) {
+            self._moderatorIds.push(value);
         });
 
-        console.log(this._currentListeners);
+        console.log("Hi there from: _onBotEnteredRoom");
+        data.users.forEach(function (value) {
+            self._currentListeners[value.userid] = createDjModel(value);
+        });
     };
 
     RoomManagementModule.prototype._onDJAdded = function (data) {
-        var newDj = this._currentListeners[data.userid];
+        var self = this;
 
-        this._currentDjs[newDj.userId] = newDj;
+        console.log("Hi there from: _onDJAdded");
+        data.user.forEach(function (dj) {
+            var newDj = self._currentListeners[dj.userid];
 
-        this.emit("djAdded", newDj);
+            self._currentDjs[newDj.userId] = newDj;
+
+            self.emit("djAdded", newDj);
+        });
     };
 
     RoomManagementModule.prototype._onDJRemoved = function (data) {
+        console.log("Hi there from: _onDJRemoved");
         var removedDj = this._currentDjs[data.userid];
 
         // Something horrible has happened if this doesn't evaluate to true.
@@ -60,18 +76,22 @@
         }
     };
 
-    RoomManagementModule.prototype._onDJJoined = function (data) {
-        console.log(data);
-        var newListener = createDjModel(data);
+    RoomManagementModule.prototype._onListenerJoined = function (data) {
+        var self = this;
 
-        // We don't care about us joining the room, it's annoying but we have to check...
-        if (newListener.userId !== this._botConfig.bot.credentials.userid) {
-            this._currentListeners[newListener.userId] = newListener;
-        }
+        console.log("Hi there from: _onListenerJoined");
+        data.user.forEach(function (user) {
+            var newListener = createDjModel(user);
+
+            // We don't care about us joining the room, it's annoying but we have to check...
+            if (newListener.userId !== self._botConfig.bot.credentials.userid) {
+                self._currentListeners[newListener.userId] = newListener;
+            }
+        });
     };
 
-    RoomManagementModule.prototype._onDJLeft = function (data) {
-        console.log(data);
+    RoomManagementModule.prototype._onListenerLeft = function (data) {
+        console.log("Hi there from: _onListenerLeft");
 
         var dj = this._currentListeners[data.userid];
         if (dj) {
@@ -81,6 +101,18 @@
 
     RoomManagementModule.prototype.currentDjs = function () {
         return this._currentDjs;
+    };
+
+    RoomManagementModule.prototype.currentListeners = function () {
+        return this._currentListeners;
+    };
+
+    RoomManagementModule.prototype.isAdmin = function (userId) {
+        if (userId === this._botConfig.bot.admin || this._moderatorIds.indexOf(userId) > -1) {
+            return true;
+        }
+
+        return false;
     };
 
     module.exports = RoomManagementModule;
