@@ -45,7 +45,7 @@
                         var roomChanged = function (data) {
                             setTimeout(function () {
                                 ttApi.speak("O_O");
-                                ttApi.pm("/bert2 narwhal", botConfig.bot.credentials.userid);
+                                ttApi.pm("/narwhal", botConfig.bot.credentials.userid);
                             }, 1500);
                         };
                         ttApi.once("roomChanged", roomChanged);

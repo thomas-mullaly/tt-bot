@@ -5,6 +5,8 @@
     var util = require("./Utils.js");
     var StatsModule = require("./modules/StatsModule.js");
     var CommandsModule = require("./modules/CommandsModule.js");
+    var RoomManagementModule = require("./modules/RoomManagementModule.js");
+
     var underscore = require("underscore");
 
     var TTBot = function (projectDir) {
@@ -13,6 +15,7 @@
         this.PROJECT_DIR = projectDir;
         this.statsModule = null;
         this.commandsModule = null;
+        this.roomManagementModule = null;
     };
 
     TTBot.prototype.initialize = function () {
@@ -29,6 +32,7 @@
         this.ttApi = new TTApi(botConfig.credentials.auth, botConfig.credentials.userid, botConfig.roomid);
 
         this.ttApi.on("ready", function () {
+            console.log(arguments);
             self._loadModules();
         });
     };
@@ -40,6 +44,7 @@
     TTBot.prototype._loadModules = function () {
         this.statsModule = new StatsModule(this.ttApi, util);
         this.commandsModule = new CommandsModule(this.ttApi, util, this.config);
+        this.roomManagementModule = new RoomManagementModule(this.ttApi, this.config);
     };
 
     TTBot.prototype.getTTApi = function () {
