@@ -19,6 +19,20 @@
                 "You've been hit by, you've been struck by a smooth criminal."
             ]
         },
-        {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"}
+        {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"},
+        {"name": "samba", "responseType": "single", "responseData": ":dancer:"},
+        {"name": "beer", "responseType": "single", "responseData": "Hey, it's 5 o'clock somewhere :beers:"},
+        {
+            "name": "ride it",
+            "responseType": "random", 
+            "responseData": [
+                "Ride it. :horse:",
+                "My pony. :horse:",
+                "My saddle's waiting. :horse:",
+                "Let's do it. :horse:",
+                "Come and jump on it. :horse:"
+            ]
+        },
+        {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"}
     ]
 }
