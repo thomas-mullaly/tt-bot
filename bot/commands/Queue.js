@@ -77,11 +77,28 @@
         }
     };
 
+    QueueCommandHandler.prototype.dequeue = function (data, ttApi) {
+        var usersInQueue, position;
+
+        if (!this._isQueueOn) {
+            ttApi.speak("The queue's not enabled. You're drunk @" + data.userName + ". Go home.");
+        }
+
+        usersInQueue = _(this._queue).pluck('userId');
+        position = _(usersInQueue).indexOf(data.userId);
+
+        if (position > -1) {
+            this._queue.splice(position, 1);
+            ttApi.speak("@" + data.userName + ", you've been dequeued.");
+        }
+    };
+
     exports.attachCommandHandler = function (commandsModule, ttApi, botConfig) {
         var queueCommandHandler = new QueueCommandHandler(commandsModule.roomManagementModule());
 
         commandsModule.registerCommandHandler({ botSpecific: true, command: "q" }, _.bind(queueCommandHandler.queueCommand, queueCommandHandler));
         commandsModule.registerCommandHandler({ botSpecific: true, command: "list"}, _.bind(queueCommandHandler.listQueue, queueCommandHandler));
+        commandsModule.registerCommandHandler({ botSpecific: true, command: "dq"}, _.bind(queueCommandHandler.dequeue, queueCommandHandler));
     };
 
 })();
