@@ -16,6 +16,7 @@
     var RoomManagementModule = function (ttApi, botConfig) {
         this.ttApi = ttApi;
         this._currentDjs = {};
+        this._currentDjCount = 0;
         this._currentDj = null;
         this._currentListeners = {};
         this._currentSong = {};
@@ -38,12 +39,13 @@
     };
 
     RoomManagementModule.prototype._onSongEnded = function (data) {
-        console.log(data);
+        // Increase the playcount for the DJ that just played.
+        this._currentDj.playCount += 1;
+
         this.emit("songEnded", data);
     };
 
     RoomManagementModule.prototype._onSongStarted = function (data) {
-        console.log(data);
         this._currentDj = this._currentListeners[data.room.metadata.current_dj];
         this.emit("songStarted", data);
     };
@@ -66,6 +68,7 @@
             self._currentListeners[value.userid] = createDjModel(value);
         });
 
+        this._currentDjCount = data.room.metadata.djs.length;
         data.room.metadata.djs.forEach(function (value) {
             var dj = self._currentListeners[value];
             self._currentDjs[value] = dj;
@@ -80,6 +83,8 @@
         var self = this;
 
         console.log("Hi there from: _onDJAdded");
+
+        this._currentDjCount += data.user.length;
         data.user.forEach(function (dj) {
             var newDj = self._currentListeners[dj.userid];
 
@@ -94,6 +99,7 @@
 
         console.log("Hi there from: _onDJRemoved");
 
+        this._currentDjCount -= data.user.length;
         data.user.forEach(function (dj) {
             var removedDj = self._currentDjs[dj.userid];
 
@@ -138,6 +144,10 @@
 
     RoomManagementModule.prototype.currentDj = function () {
         return this._currentDj;
+    };
+
+    RoomManagementModule.prototype.currentDjCount = function () {
+        return this._currentDjCount;
     };
 
     RoomManagementModule.prototype.isAdmin = function (userId) {
