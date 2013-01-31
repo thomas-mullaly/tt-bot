@@ -71,7 +71,6 @@
         this._currentDjCount = data.room.metadata.djs.length;
         data.room.metadata.djs.forEach(function (value) {
             var dj = self._currentListeners[value];
-            console.log("Prexisting DJ ", dj);
             self._currentDjs[value] = dj;
         });
 
@@ -90,7 +89,6 @@
 
             self._currentDjs[newDj.userId] = newDj;
             self._currentDjCount += 1;
-            console.log("count", self._currentDjCount);
             self.emit("djAdded", newDj);
         });
     };
@@ -107,7 +105,6 @@
             if (removedDj) {
                 delete self._currentDjs[removedDj.userId];
                 self._currentDjCount -= 1;
-                console.log("count", self._currentDjCount);
                 self.emit("djRemoved", removedDj);
             }
         });

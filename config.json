@@ -17,7 +17,7 @@
                 "Annie are you okay?",
                 "If you wanna be my baby, it don't matter if you're black or white.",
                 "You've been hit by, you've been struck by a smooth criminal.",
-                "SPEEEED DEMOOOON"
+                "SPEEEED DEMOOOON!!"
             ]
         },
         {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"},
@@ -35,5 +35,16 @@
             ]
         },
         {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"}
+    ],
+    "lemon_phrases": [
+        "Demand to see life's manager!",
+        "Make life rue the day it thought it could give *Bert* :lemon:'s!",
+        "Do you know who I am? I'm the man who's going to burn your house down! With the :lemon:'s! I'm going to get my engineers to invent a combustible :lemon: that burns your house down!",
+        "When life gives you :lemon:'s? Don't make lemonade. Make life take the :lemon:'s back! Get mad!",
+        "I don't want your damn :lemon:'s! What am I supposed to do with these?",
+        "Apples. Oranges. Pears. Plums. Kumquats. Tangerines. :lemon:. Limes. Avocado. Tomato. Banana. Papaya. Guava.",
+        "Don't make lemonade!",
+        "Yeah, take the :lemon:'s...",
+        "GET MAD!"
     ]
 }
