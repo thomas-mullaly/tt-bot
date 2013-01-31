@@ -35,7 +35,8 @@
             ]
         },
         {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"},
-        {"name": "do the robot", "responseType": "single", "responseData": "Bleep bloop bleep!"}
+        {"name": "do the robot", "responseType": "single", "responseData": "Bleep bloop bleep!"},
+        {"name": "you down?", "responseType": "single", "responseData": "Yeah, you know me!"}
     ],
     "lemon_phrases": [
         "Demand to see life's manager!",
