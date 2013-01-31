@@ -16,7 +16,8 @@
                 "Billie Jean is not my lover!",
                 "Annie are you okay?",
                 "If you wanna be my baby, it don't matter if you're black or white.",
-                "You've been hit by, you've been struck by a smooth criminal."
+                "You've been hit by, you've been struck by a smooth criminal.",
+                "SPEEEED DEMOOOON"
             ]
         },
         {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"},
@@ -24,7 +25,7 @@
         {"name": "beer", "responseType": "single", "responseData": "Hey, it's 5 o'clock somewhere :beers:"},
         {
             "name": "ride it",
-            "responseType": "random", 
+            "responseType": "random",
             "responseData": [
                 "Ride it. :horse:",
                 "My pony. :horse:",
