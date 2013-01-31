@@ -36,6 +36,11 @@
         this.ttApi.on("deregistered", _.bind(this._onListenerLeft, this));
         this.ttApi.on("endsong", _.bind(this._onSongEnded, this));
         this.ttApi.on("newsong", _.bind(this._onSongStarted, this));
+        this.ttApi.on("nosong", _.bind(this._onNoSong, this));
+    };
+
+    RoomManagementModule.prototype._onNoSong = function (data) {
+        this._currentDj = null;
     };
 
     RoomManagementModule.prototype._onSongEnded = function (data) {
