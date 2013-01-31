@@ -106,7 +106,6 @@
         var dj;
         var timeoutId;
 
-        console.log(self._queue);
         if (self._queue.length > 0) {
             dj = self._queue.splice(0, 1)[0];
 
@@ -156,14 +155,21 @@
     };
 
     QueueCommandHandler.prototype._onSongEnded = function (data) {
-        var self = this;
         var djToRemoveId = data.room.metadata.current_dj;
+        var i;
 
         if (!this._isQueueOn) {
             return;
         }
 
-        this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
+        // Only set them to the last DJ if it was a valid step down (they weren't pulled).
+        for (i = 0; i < this._stepUpQueue.length; ++i) {
+            if (this._stepUpQueue[i].userId === data.room.metadata.current_dj) {
+                this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
+                break;
+            }
+        }
+
         this._ttApi.remDj(djToRemoveId);
     };
 
@@ -230,16 +236,24 @@
 
     QueueCommandHandler.prototype.addToQueue = function (data, ttApi) {
         var position = -1;
+        var positionsFilled = -1;
 
         if (!this._isQueueOn) {
             ttApi.speak("The queue isn't currently enabled @" + data.userName + ". Feel free to hop up when there's an opening!");
+            return;
+        } else if (this._roomManagementModule.currentDjs()[data.userId]) {
+            ttApi.speak("What? Now you want to take two DJ spots on stage @" + data.userName + "?");
             return;
         }
 
         position = this.addUserToQueue(data);
 
-        // All them to step up.
-        if (this._roomManagementModule.currentDjCount() + this._stepUpQueue.length < 5) {
+        // Allow them to step up if there's room.
+        positionsFilled = this._stepUpQueue.length;
+        if (this._roomManagementModule.currentDj()) {
+            positionsFilled += 1;
+        }
+        if (positionsFilled < 5) {
             this._allowNextPersonInQueueToStepUp();
         } else {
             ttApi.speak("@" + data.userName + ", you've been added to queue. Your current position is " + (position + 1));

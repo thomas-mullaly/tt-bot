@@ -71,6 +71,7 @@
         this._currentDjCount = data.room.metadata.djs.length;
         data.room.metadata.djs.forEach(function (value) {
             var dj = self._currentListeners[value];
+            console.log("Prexisting DJ ", dj);
             self._currentDjs[value] = dj;
         });
 
@@ -84,12 +85,12 @@
 
         console.log("Hi there from: _onDJAdded");
 
-        this._currentDjCount += data.user.length;
         data.user.forEach(function (dj) {
             var newDj = self._currentListeners[dj.userid];
 
             self._currentDjs[newDj.userId] = newDj;
-
+            self._currentDjCount += 1;
+            console.log("count", self._currentDjCount);
             self.emit("djAdded", newDj);
         });
     };
@@ -99,13 +100,14 @@
 
         console.log("Hi there from: _onDJRemoved");
 
-        this._currentDjCount -= data.user.length;
         data.user.forEach(function (dj) {
             var removedDj = self._currentDjs[dj.userid];
 
             // Something horrible has happened if this doesn't evaluate to true.
             if (removedDj) {
-                delete self._currentDjs[data.userid];
+                delete self._currentDjs[removedDj.userId];
+                self._currentDjCount -= 1;
+                console.log("count", self._currentDjCount);
                 self.emit("djRemoved", removedDj);
             }
         });
