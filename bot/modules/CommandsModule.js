@@ -30,7 +30,7 @@
 
     CommandsModule.prototype._createCommandData = function (messageData, parameters) {
         var userId = messageData.senderid ? messageData.senderid : messageData.userid;
-        var userName = messageData.name ? messageData.name : this._roomManagementModule.currentListeners()[userId].userName;
+        var userName = messageData.name ? messageData.name : this._roomManagementModule.currentListeners()[userId].userName();
         return {
             type: messageData.command,
             userId: userId,

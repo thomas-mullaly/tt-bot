@@ -11,6 +11,7 @@
         this._lastDj = null;
         this._stepUpQueue = [];
         this._currentDjCount = 0;
+        this._wasValidStepUp = false;
     };
 
     QueueCommandHandler.prototype._registerToRoomEvents = function () {
@@ -35,7 +36,7 @@
         }
 
         for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === data.userId) {
+            if (this._stepUpQueue[i].userId === data.userId()) {
                 this._stepUpQueue[i].isDJing = true;
                 if (this._stepUpQueue[i].timeoutId) {
                     clearTimeout(this._stepUpQueue[i].timeoutId);
@@ -46,14 +47,13 @@
         }
 
         // If we get here, it wasn't a valid step up. So pull them.
-        this._ttApi.remDj(data.userId);
-        this._ttApi.speak("We're using a queue @" + data.userName + ". Type '/bert2 q' for a chance to spin.");
+        this._ttApi.remDj(data.userId());
+        this._ttApi.speak("We're using a queue @" + data.userName() + ". Type '/bert2 q' for a chance to spin.");
     };
 
     QueueCommandHandler.prototype._onDjRemoved = function (data) {
         var self = this;
         var position = -1;
-        var djInfo = self._roomManagementModule.currentListeners()[data.userId];
         var i;
 
         if (!self._isQueueOn) {
@@ -61,17 +61,17 @@
         }
 
         // If the last DJ steps down, the next person to step up is the first person in the queue.
-        if (self._lastDj && self._lastDj.userId === data.userId) {
+        if (self._lastDj && self._lastDj.userId() === data.userId()) {
             // Add the user that just DJ'd back into the queue.
             position = self.addUserToQueue(data);
-            self._ttApi.pm("Thanks for DJing! You've been added to the queue, your current position is " + (position + 1), data.userId);
+            self._ttApi.pm("Thanks for DJing! You've been added to the queue, your current position is " + (position + 1), data.userId());
             self._lastDj = null;
 
             self._allowNextPersonInQueueToStepUp();
         } else {
             // Check if it was an early step down.
             for (i = 0; i < self._stepUpQueue.length; ++i) {
-                if (self._stepUpQueue[i].userId === data.userId) {
+                if (self._stepUpQueue[i].userId === data.userId()) {
                     self._stepUpQueue[i].isDJing = false;
                     self._handleEarlyStepDown(self._stepUpQueue[i]);
                 }
@@ -162,13 +162,7 @@
             return;
         }
 
-        // Only set them to the last DJ if it was a valid step down (they weren't pulled).
-        for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === data.room.metadata.current_dj) {
-                this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
-                break;
-            }
-        }
+        this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
 
         this._ttApi.remDj(djToRemoveId);
     };
@@ -182,7 +176,7 @@
 
         // Remove the current DJ from the step up queue.
         for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === this._roomManagementModule.currentDj().userId) {
+            if (this._stepUpQueue[i].userId === this._roomManagementModule.currentDj().userId()) {
                 this._stepUpQueue.splice(i, 1);
             }
         }
@@ -205,6 +199,7 @@
     };
 
     QueueCommandHandler.prototype.queueOn = function (data, ttApi) {
+        var self = this;
         if (this._roomManagementModule.isAdmin(data.userId)) {
             this._registerToRoomEvents();
             this._isQueueOn = true;
@@ -212,15 +207,13 @@
 
             // Add the current DJs on stage to the stepUp queue.
             var currentDjs = this._roomManagementModule.currentDjs();
-            var dj;
-            for (var prop in currentDjs) {
-                if (currentDjs.hasOwnProperty(prop)) {
-                    dj = currentDjs[prop];
-                    if (this._roomManagementModule.currentDj().userId !== dj.userId) {
-                        this._stepUpQueue.push({ userId: dj.userId, userName: dj.userName, isDJing: true, timeoutId: null });
-                    }
+
+            currentDjs.forEach(function (djId){
+                var dj = self._roomManagementModule.currentListeners()[djId];
+                if (self._roomManagementModule.currentDj().userId() !== djId) {
+                    self._stepUpQueue.push({ userId: dj.userId(), userName: dj.userName(), isDJing: true, timeoutId: null });
                 }
-            }
+            });
         }
     };
 
@@ -241,7 +234,7 @@
         if (!this._isQueueOn) {
             ttApi.speak("The queue isn't currently enabled @" + data.userName + ". Feel free to hop up when there's an opening!");
             return;
-        } else if (this._roomManagementModule.currentDjs()[data.userId]) {
+        } else if (this._roomManagementModule.currentDjs().indexOf(data.userId) > -1) {
             ttApi.speak("What? Now you want to take two DJ spots on stage @" + data.userName + "?");
             return;
         }
@@ -265,7 +258,7 @@
 
         // Check if the user is in the queue.
         for (i = 0; i < this._queue.length; ++i) {
-            if (this._queue[i].userId === userInfo.userId) {
+            if (this._queue[i].userId === userInfo.userId()) {
                 position = i;
                 break;
             }

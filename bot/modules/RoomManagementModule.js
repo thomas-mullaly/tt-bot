@@ -1,24 +1,13 @@
 (function () {
 
-    var utils = require("./../Utils.js");
+    var Listener = require("./../model/Listener.js");
     var eventEmitter = require('events').EventEmitter;
     var _ = require("underscore");
-
-    var createDjModel = function (data) {
-        return {
-            playCount: 0,
-            escortCount: 0,
-            userName: data.name,
-            userId: data.userid
-        }
-    };
 
     var RoomManagementModule = function (ttApi, botConfig) {
         this.ttApi = ttApi;
         this._currentDjs = {};
-        this._currentDjCount = 0;
-        this._currentDj = null;
-        this._currentListeners = {};
+        this._currentListeners = [];
         this._currentSong = {};
         this._moderatorIds = [];
         this._botConfig = botConfig;
@@ -40,18 +29,17 @@
     };
 
     RoomManagementModule.prototype._onNoSong = function (data) {
-        this._currentDj = null;
+
     };
 
     RoomManagementModule.prototype._onSongEnded = function (data) {
         // Increase the playcount for the DJ that just played.
-        this._currentDj.playCount += 1;
+        this._currentListeners[this._currentDjs[0]].increasePlayCount();
 
         this.emit("songEnded", data);
     };
 
     RoomManagementModule.prototype._onSongStarted = function (data) {
-        this._currentDj = this._currentListeners[data.room.metadata.current_dj];
         this.emit("songStarted", data);
     };
 
@@ -62,26 +50,21 @@
 
         self._moderatorIds = [];
         self._currentListeners = {};
-        self._currentDjs = {};
+        self._currentDjs = [];
         self._currentDj = null;
 
-        data.room.metadata.moderator_id.forEach(function (value) {
-            self._moderatorIds.push(value);
+        data.room.metadata.moderator_id.forEach(function (modId) {
+            self._moderatorIds.push(modId);
         });
 
-        data.users.forEach(function (value) {
-            self._currentListeners[value.userid] = createDjModel(value);
+        data.users.forEach(function (user) {
+            self._currentListeners[user.userid] = new Listener(user);
         });
 
         this._currentDjCount = data.room.metadata.djs.length;
-        data.room.metadata.djs.forEach(function (value) {
-            var dj = self._currentListeners[value];
-            self._currentDjs[value] = dj;
+        data.room.metadata.djs.forEach(function (djId) {
+            self._currentDjs.push(djId);
         });
-
-        if (data.room.metadata.current_dj) {
-            self._currentDj = self._currentListeners[data.room.metadata.current_dj];
-        }
     };
 
     RoomManagementModule.prototype._onDJAdded = function (data) {
@@ -92,8 +75,7 @@
         data.user.forEach(function (dj) {
             var newDj = self._currentListeners[dj.userid];
 
-            self._currentDjs[newDj.userId] = newDj;
-            self._currentDjCount += 1;
+            self._currentDjs.push(dj.userid);
             self.emit("djAdded", newDj);
         });
     };
@@ -104,13 +86,15 @@
         console.log("Hi there from: _onDJRemoved");
 
         data.user.forEach(function (dj) {
-            var removedDj = self._currentDjs[dj.userid];
+            var djId = dj.userid;
 
-            // Something horrible has happened if this doesn't evaluate to true.
-            if (removedDj) {
-                delete self._currentDjs[removedDj.userId];
-                self._currentDjCount -= 1;
-                self.emit("djRemoved", removedDj);
+            var index = self._currentDjs.indexOf(djId);
+
+            if (index > -1) {
+                self._currentDjs.splice(index, 1);
+
+                self._currentListeners[djId].resetPlayCount();
+                self.emit("djRemoved", self._currentListeners[djId]);
             }
         });
     };
@@ -120,11 +104,11 @@
 
         console.log("Hi there from: _onListenerJoined");
         data.user.forEach(function (user) {
-            var newListener = createDjModel(user);
+            var newListener = new Listener(user);
 
             // We don't care about us joining the room, it's annoying but we have to check...
             if (newListener.userId !== self._botConfig.bot.credentials.userid) {
-                self._currentListeners[newListener.userId] = newListener;
+                self._currentListeners[newListener.userId()] = newListener;
             }
         });
     };
@@ -147,11 +131,7 @@
     };
 
     RoomManagementModule.prototype.currentDj = function () {
-        return this._currentDj;
-    };
-
-    RoomManagementModule.prototype.currentDjCount = function () {
-        return this._currentDjCount;
+        return this._currentDjs.length > 0 ? this._currentListeners[this._currentDjs[0]] : null;
     };
 
     RoomManagementModule.prototype.isAdmin = function (userId) {
