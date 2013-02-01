@@ -6,7 +6,6 @@
     var CommandsModule = function (ttApi, roomManagementModule, utils, config) {
         this.ttApi = ttApi;
         this.commandHandlers = [];
-        this.botCommandPrefix = '/' + config.bot.name;
         this.commandsDirectory = __dirname + "/./../commands";
         this.utils = utils;
         this.botConfig = config;
