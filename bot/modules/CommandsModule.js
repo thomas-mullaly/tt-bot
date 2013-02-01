@@ -59,19 +59,24 @@
         for (var i = 0; i < this.commandHandlers.length; ++i) {
             var commandHandler = this.commandHandlers[i];
 
-            var command = '/';
+            var command = '';
 
             // Only append the bot name if it's a bot specific command and the message
             // came from the the chat.
-            if (commandHandler.info.botSpecific && data.command === 'speak') {
-                command += this.botConfig.bot.name + ' ';
+            if (commandHandler.info.botSpecific) {
+                command += '/'
+                if (data.command === 'speak') {
+                    command += this.botConfig.bot.name + ' ';
+                }
             }
 
             command += commandHandler.info.command;
 
             if (data.text.toLowerCase().indexOf(command.toLowerCase()) === 0) {
-                var parameters = data.text.substring(command.length);
-                commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
+                if (data.text.length === command.length || data.text[command.length] === ' ') {
+                    var parameters = data.text.substring(command.length);
+                    commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
+                }
             }
         }
     };
