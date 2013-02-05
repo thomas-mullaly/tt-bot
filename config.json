@@ -34,6 +34,7 @@
             ]
         },
         {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"},
-	{"name": "zz", "responseType": "single", "responseData": "Try a somersault!"}
+	{"name": "zz", "responseType": "single", "responseData": "Try a somersault!"},
+	{"name": "rr", "responseType": "single", "responseData": "Try a somersault!"}
     ]
 }
