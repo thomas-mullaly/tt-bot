@@ -16,7 +16,8 @@
                 "Billie Jean is not my lover!",
                 "Annie are you okay?",
                 "If you wanna be my baby, it don't matter if you're black or white.",
-                "You've been hit by, you've been struck by a smooth criminal."
+                "You've been hit by, you've been struck by a smooth criminal.",
+                "SPEEEED DEMOOOON!!"
             ]
         },
         {"name": "rock", "responseType": "single", "responseData": "Thumbs up, everybody, for rock and roll!"},
@@ -24,7 +25,7 @@
         {"name": "beer", "responseType": "single", "responseData": "Hey, it's 5 o'clock somewhere :beers:"},
         {
             "name": "ride it",
-            "responseType": "random", 
+            "responseType": "random",
             "responseData": [
                 "Ride it. :horse:",
                 "My pony. :horse:",
@@ -33,6 +34,71 @@
                 "Come and jump on it. :horse:"
             ]
         },
-        {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"}
+        {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"},
+        {"name": "do the robot", "responseType": "single", "responseData": "Bleep bloop bleep!"},
+        {"name": "you down?", "responseType": "single", "responseData": "Yeah, you know me!"},
+        {"name": "boogie", "responseType": "none", "responseData": null}
+    ],
+    "lemon_phrases": [
+        "Demand to see life's manager!",
+        "Make life rue the day it thought it could give *Bert* :lemon:'s!",
+        "Do you know who I am? I'm the man who's going to burn your house down! With the :lemon:'s! I'm going to get my engineers to invent a combustible :lemon: that burns your house down!",
+        "When life gives you :lemon:'s? Don't make lemonade. Make life take the :lemon:'s back! Get mad!",
+        "I don't want your damn :lemon:'s! What am I supposed to do with these?",
+        "Apples. Oranges. Pears. Plums. Kumquats. Tangerines. :lemon:. Limes. Avocado. Tomato. Banana. Papaya. Guava.",
+        "Don't make lemonade!",
+        "Yeah, take the :lemon:'s...",
+        "GET MAD!",
+        "Make life take the :lemon:'s back!"
+    ],
+    "science_phrases": [
+        "Well done. Here come the test results: \"You are a horrible person.\" That's what it says. We weren't even testing for that.",
+        "Science has now validated your birth mother's decision to abandon you on a doorstep.",
+        "Remember before when I was talking about smelly garbage standing around being useless? That was a metaphor. I was actually talking about you.",
+        "This next test is very dangerous. To help you remain tranquil in the face of almost certain death, smooth jazz will be deployed in three. Two. One. [SMOOTH JAZZ]",
+        "Okay, fine. Let's all act like humans. 'Look at me. Boy, do I love sweating. Let's convert beef and leaves into energy and excrete them later and go shopping.",
+        "Cake and grief counseling will be available at the conclusion of the test.",
+        "Unbelievable. You, *subject name here,* must be the pride of *subject hometown here.*"
+    ],
+    "back_to_the_future_phrases": [
+        "Get your meat hooks off of me.",
+        "1.21 gigawatts! 1.21 gigawatts. Great Scott!",
+        "Once this baby hits 88 miles per hour, you're going to see some serious :poop:",
+        "Maybe you weren't ready for that ... but your kids are going to love it.",
+        "What happens to us in the future? Do we become a&*holes or something?",
+        "Roads ... where we're going, we don't need roads.",
+        "I'm your density. I mean, your destiny.",
+        "Let's see if you bastards can do 90. ",
+        "Are you trying to tell me that my mother has got the hots for me?",
+        "Why are things so heavy in the future? Is there a problem with the Earth's gravitational pull?",
+        "Why don't you make like a tree and get outta here?",
+        "Oh, that's about as funny as a screen door on a battleship.",
+        "Okay. Time circuit's on. Flux capacitor, fluxing. Engine running. All right.",
+        "Oh, honey, he's teasing you. Nobody has two television sets.",
+        "You got a real attitude problem, McFly. You're a slacker."
+    ],
+    "tommy_phrases": [
+        "YOU'RE TEARING ME APART, LISA!",
+        "Oh, hi doggie.",
+        "I did not hit her, its bullshit, I did not hit her, I DID NAAAHT!",
+        "Chicken Peter, you're just a little chicken. CHEEP CHEEP!",
+        "Everybody betrayed me! I'm fed up with this world!",
+        "This is a great party, you invited all my friends, good thinking.",
+        "The tests came back. I definitely have breast cancer.",
+        "Ha ha ha. What a story, Mark.",
+        "I'm tired, I'm wasted, I love you darling.",
+        "Denny, two is great, but three is a crowd."
+    ],
+    "duchess_phrases": [
+        "Do you want ants? Because that's how you get ants.",
+        "Can I offer you a drink? How about this expensive prostitute?",
+        "Lying is like 95% of what I do.",
+        "You know, I bet there's a lesson to be learned from all this, but I ... oh :poop:, my rug!",
+        "No Cyril, when they're dead, they're just hookers!",
+        "How hard is it to poach a goddamn egg properly? Seriously, that's like Eggs 101, Woodhouse.",
+        "How'd you get life insurance, Lana? Don't they know you're in the danger zone?",
+        "Lana. Lana. Lana? LANA! Danger zone.",
+        "I'm getting my turtleneck. I'm not defusing a bomb in this!",
+        "Hey Cyril. Cyril. CYRIL! I'm saving Lana, as usual!"
     ]
 }

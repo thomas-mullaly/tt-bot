@@ -3,13 +3,13 @@
 
     var fs = require("fs");
 
-    var CommandsModule = function (ttApi, utils, config) {
+    var CommandsModule = function (ttApi, roomManagementModule, utils, config) {
         this.ttApi = ttApi;
         this.commandHandlers = [];
-        this.botCommandPrefix = '/' + config.bot.name;
         this.commandsDirectory = __dirname + "/./../commands";
         this.utils = utils;
         this.botConfig = config;
+        this._roomManagementModule = roomManagementModule;
 
         this._loadCommandHandlers();
 
@@ -30,9 +30,11 @@
 
     CommandsModule.prototype._createCommandData = function (messageData, parameters) {
         var userId = messageData.senderid ? messageData.senderid : messageData.userid;
+        var userName = messageData.name ? messageData.name : this._roomManagementModule.currentListeners()[userId].userName();
         return {
             type: messageData.command,
             userId: userId,
+            userName: userName,
             roomId: messageData.roomid,
             message: messageData.text,
             parameters: parameters
@@ -56,25 +58,34 @@
         for (var i = 0; i < this.commandHandlers.length; ++i) {
             var commandHandler = this.commandHandlers[i];
 
-            var command = '/';
+            var command = '';
 
             // Only append the bot name if it's a bot specific command and the message
             // came from the the chat.
-            if (commandHandler.info.botSpecific && data.command === 'speak') {
-                command += this.botConfig.bot.name + ' ';
+            if (commandHandler.info.botSpecific) {
+                command += '/'
+                if (data.command === 'speak') {
+                    command += this.botConfig.bot.name + ' ';
+                }
             }
 
             command += commandHandler.info.command;
 
             if (data.text.toLowerCase().indexOf(command.toLowerCase()) === 0) {
-                var parameters = data.text.substring(command.length);
-                commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
+                if (data.text.length === command.length || data.text[command.length] === ' ') {
+                    var parameters = data.text.substring(command.length);
+                    commandHandler.callback(this._createCommandData(data, parameters), this.ttApi);
+                }
             }
         }
     };
 
     CommandsModule.prototype.registerCommandHandler = function (commandHandlerInfo, callback) {
         this.commandHandlers.push({ info: commandHandlerInfo, callback: callback });
+    };
+
+    CommandsModule.prototype.roomManagementModule = function () {
+        return this._roomManagementModule;
     };
 
     module.exports = CommandsModule;
