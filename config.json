@@ -37,7 +37,9 @@
         {"name": "move your body", "responseType": "single", "responseData": "Come on now everybody! :dancers:"},
         {"name": "do the robot", "responseType": "single", "responseData": "Bleep bloop bleep!"},
         {"name": "you down?", "responseType": "single", "responseData": "Yeah, you know me!"},
-        {"name": "boogie", "responseType": "none", "responseData": null}
+        {"name": "boogie", "responseType": "none", "responseData": null},
+        {"name": "zz", "responseType": "single", "responseData": "Try a somersault!"},
+        {"name": "rr", "responseType": "single", "responseData": "Try a somersault!"}
     ],
     "lemon_phrases": [
         "Demand to see life's manager!",
