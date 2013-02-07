@@ -7,7 +7,9 @@
 
     var RoomManagementModule = function (ttApi, botConfig) {
         this._ttApi = ttApi;
+        this._botConfig = botConfig;
 
+        this._moderatorIds = [];
         this._users = [];
 
         this._registerToTTEvents();
@@ -23,10 +25,17 @@
 
     RoomManagementModule.prototype._onEnteredRoom = function (eventData) {
         var self = this;
+
+        self._moderatorIds = eventData.room.moderator_id;
+
         self._resetModule();
 
         eventData.users.forEach(function (userData) {
-            self._users.push(new User(userData));
+            var user = new User(userData);
+
+            user.setModerator(_(self._moderatorIds).contains(userData.userid));
+
+            self._users.push(user);
         });
     };
 
@@ -35,8 +44,14 @@
 
         eventData.user.forEach(function (userData) {
             var user = new User(userData);
-            self._users.push(user);
-            self.emit("userJoined", user);
+
+            user.setModerator(_(self._moderatorIds).contains(userData.userid));
+
+            // We don't care about us joining the room, it's annoying but we have to check...
+            if (user.userId() !== self._botConfig.bot.credentials.userid) {
+                self._users.push(user);
+                self.emit("userJoined", user);
+            }
         });
     };
 
@@ -62,6 +77,7 @@
 
     RoomManagementModule.prototype._resetModule = function () {
         this._users = [];
+        this._moderatorIds = [];
     };
 
     RoomManagementModule.prototype.currentUsers = function () {
