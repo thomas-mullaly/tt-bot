@@ -5,6 +5,7 @@
         this._isModerator = false;
         this._joinDate = ttUserData.created;
         this._isModerator = false;
+        this._userSession = null;
     };
 
     User.prototype = {
@@ -26,6 +27,18 @@
 
         setModerator: function (isModerator) {
             this._isModerator = isModerator;
+        },
+
+        setUserSession: function (userSession) {
+            this._userSession = userSession;
+        },
+
+        userSession: function () {
+            return this._userSession;
+        },
+
+        isInRoom: function () {
+            return this._userSession !== null;
         }
     };
 

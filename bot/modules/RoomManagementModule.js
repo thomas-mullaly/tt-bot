@@ -2,6 +2,7 @@
     "use strict";
 
     var User = require("./../model/User.js");
+    var UserSession = require("./../model/UserSession.js");
     var eventEmitter = require('events').EventEmitter;
     var _ = require("underscore");
 
@@ -36,16 +37,19 @@
         eventData.users.forEach(function (userData) {
             var user = new User(userData);
 
-            user.setModerator(self._isModerator.call(self, userData.userid));
+            user.setModerator(self._isModerator(userData.userid));
+            user.setUserSession(new UserSession());
 
             self._users[userData.userid] = user;
         });
 
         eventData.djids.forEach(function (userId) {
-            self._currentDjs.push(self._users[userId]);
-        });
+            var dj = self._users[userId];
 
-        console.log(self._currentDjs);
+            dj.userSession().setDJing(true);
+
+            self._currentDjs.push(dj);
+        });
     };
 
     RoomManagementModule.prototype._onUserJoined = function (eventData) {
@@ -54,10 +58,11 @@
         eventData.user.forEach(function (userData) {
             var user = new User(userData);
 
-            user.setModerator(self._isModerator.call(self, userData.userid));
-
             // We don't care about us joining the room, it's annoying but we have to check...
             if (user.userId() !== self._botConfig.bot.credentials.userid) {
+                user.setModerator(self._isModerator(userData.userid));
+                user.setUserSession(new UserSession());
+
                 self._users[user.userId()] = user;
                 self.emit("userJoined", user);
             }
@@ -69,6 +74,9 @@
 
         eventData.user.forEach(function (userData, index) {
             var user = self._users[userData.userid];
+
+            user.setUserSession(null);
+
             delete self._users[userData.userid];
             self.emit("userLeft", user);
         });
@@ -79,6 +87,9 @@
 
         eventData.user.forEach(function (user) {
             var newDj = self._users[user.userid];
+
+            newDj.userSession().setDJing(true);
+
             self._currentDjs.push(newDj);
             self.emit("djAdded", newDj);
         });
@@ -89,7 +100,10 @@
 
         eventData.user.forEach(function (user) {
             var removedDj = self._users[user.userid];
-            self._removeDjFromList.call(self, user.userid);
+
+            removedDj.userSession().setDJing(false);
+
+            self._removeDjFromList(user.userid);
             self.emit("djRemoved", removedDj);
         });
     };
