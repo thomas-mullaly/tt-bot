@@ -1,9 +1,9 @@
 (function () {
-    var User = function (ttUserData) {
-        this._userName = ttUserData.name;
-        this._userId = ttUserData.userid;
+    var User = function (userId, userName, joinDate) {
+        this._userName = userName;
+        this._userId = userId;
         this._isModerator = false;
-        this._joinDate = ttUserData.created;
+        this._joinDate = joinDate;
         this._isModerator = false;
         this._userSession = null;
     };

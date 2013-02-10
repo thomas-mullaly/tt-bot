@@ -2,19 +2,21 @@
     "use strict";
 
     var fs = require("fs");
+    var _ = require("underscore");
 
-    var CommandsModule = function (ttApi, roomManagementModule, utils, config) {
+    var User = require("./../model/User.js");
+
+    var CommandsModule = function (ttApi, roomManagementModule, config) {
         this.ttApi = ttApi;
         this.commandHandlers = [];
         this.commandsDirectory = __dirname + "/./../commands";
-        this.utils = utils;
         this.botConfig = config;
         this._roomManagementModule = roomManagementModule;
 
         this._loadCommandHandlers();
 
-        ttApi.on("speak", utils.proxy(this, this.onChatMessageRecieved));
-        ttApi.on("pmmed", utils.proxy(this, this.onPrivateMessageRecieved));
+        ttApi.on("speak", _.bind(this.onChatMessageRecieved, this));
+        ttApi.on("pmmed", _.bind(this.onPrivateMessageRecieved, this));
     };
 
     CommandsModule.prototype.onChatMessageRecieved = function (data) {
@@ -30,11 +32,18 @@
 
     CommandsModule.prototype._createCommandData = function (messageData, parameters) {
         var userId = messageData.senderid ? messageData.senderid : messageData.userid;
-        var userName = messageData.name ? messageData.name : this._roomManagementModule.currentListeners()[userId].userName();
+        var user = null;
+
+        if (messageData.command === 'speak') {
+            user = this._roomManagementModule.currentUsers()[userId];
+        } else {
+            user = new User(userId, messageData.name, null);
+            user.setModerator(this._roomManagementModule.isModerator(userId));
+        }
+
         return {
             type: messageData.command,
-            userId: userId,
-            userName: userName,
+            user: user,
             roomId: messageData.roomid,
             message: messageData.text,
             parameters: parameters

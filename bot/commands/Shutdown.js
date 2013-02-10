@@ -3,7 +3,7 @@
     var roomManagementModule = null;
 
     var shutdown = function (data, ttApi) {
-        if (data.userId === '50be3de2aaa5cd11e1141a6b') {
+        if (data.user.userId() === '50be3de2aaa5cd11e1141a6b') {
             setTimeout(function () {
                 ttApi.speak("You think you can control me @" + data.userName + "!? :rage4:");
             }, 3000);
@@ -31,7 +31,7 @@
             return;
         }
 
-        if (roomManagementModule.isAdmin(data.userId)) {
+        if (data.user.isModerator()) {
             ttApi.speak("Shutting down...");
             ttApi.roomDeregister();
             process.exit(0);

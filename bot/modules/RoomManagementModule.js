@@ -35,9 +35,9 @@
         self._moderatorIds = eventData.room.metadata.moderator_id;
 
         eventData.users.forEach(function (userData) {
-            var user = new User(userData);
+            var user = new User(userData.userid, userData.name, userData.created);
 
-            user.setModerator(self._isModerator(userData.userid));
+            user.setModerator(self.isModerator(userData.userid));
             user.setUserSession(new UserSession());
 
             self._users[userData.userid] = user;
@@ -56,11 +56,11 @@
         var self = this;
 
         eventData.user.forEach(function (userData) {
-            var user = new User(userData);
+            var user = new User(userData.userid, userData.name, userData.created);
 
             // We don't care about us joining the room, it's annoying but we have to check...
             if (user.userId() !== self._botConfig.bot.credentials.userid) {
-                user.setModerator(self._isModerator(userData.userid));
+                user.setModerator(self.isModerator(userData.userid));
                 user.setUserSession(new UserSession());
 
                 self._users[user.userId()] = user;
@@ -130,7 +130,7 @@
         this._moderatorIds = [];
     };
 
-    RoomManagementModule.prototype._isModerator = function (userId) {
+    RoomManagementModule.prototype.isModerator = function (userId) {
         return _(this._moderatorIds).contains(userId) || this._botConfig.bot.admin === userId;
     };
 

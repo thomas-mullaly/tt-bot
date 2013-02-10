@@ -1,8 +1,7 @@
 (function () {
     "use strict";
 
-    var StatsModule = function (ttApi, util) {
-        ttApi.on("songended", util.proxy(this, this.onSongEnded));
+    var StatsModule = function (ttApi) {
     };
 
     StatsModule.prototype.onSongEnded = function (data) {

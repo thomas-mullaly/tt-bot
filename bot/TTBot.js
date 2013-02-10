@@ -2,7 +2,6 @@
     "use strict";
 
     var TTApi = require("ttapi");
-    var util = require("./Utils.js");
     var StatsModule = require("./modules/StatsModule.js");
     var CommandsModule = require("./modules/CommandsModule.js");
     var RoomManagementModule = require("./modules/RoomManagementModule.js");
@@ -38,9 +37,9 @@
     };
 
     TTBot.prototype._loadModules = function () {
-        this.statsModule = new StatsModule(this.ttApi, util);
+        this.statsModule = new StatsModule(this.ttApi);
         this.roomManagementModule = new RoomManagementModule(this.ttApi, this.config);
-        this.commandsModule = new CommandsModule(this.ttApi, this.roomManagementModule, util, this.config);
+        this.commandsModule = new CommandsModule(this.ttApi, this.roomManagementModule, this.config);
     };
 
     TTBot.prototype.getTTApi = function () {

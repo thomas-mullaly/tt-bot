@@ -23,10 +23,8 @@
             });
         } else {
             // Just register some default commands.
-            commandsModule.registerCommandHandler({ botSpecific: true, command: "bop" },
-                utils.proxy(danceCommandHandler, bop));
-            commandsModule.registerCommandHandler({ botSpecific: true, command: "dance" },
-                utils.proxy(danceCommandHandler, bop));
+            commandsModule.registerCommandHandler({ botSpecific: true, command: "bop" }, bop);
+            commandsModule.registerCommandHandler({ botSpecific: true, command: "dance" }, bop);
         }
     }
 })();
