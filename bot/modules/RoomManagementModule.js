@@ -10,7 +10,8 @@
         this._botConfig = botConfig;
 
         this._moderatorIds = [];
-        this._users = [];
+        this._users = {};
+        this._currentDjs = [];
 
         this._registerToTTEvents();
     };
@@ -21,22 +22,30 @@
         this._ttApi.on("roomChanged", _.bind(this._onEnteredRoom, this));
         this._ttApi.on("registered", _.bind(this._onUserJoined, this));
         this._ttApi.on("deregistered", _.bind(this._onUserLeft, this));
+        this._ttApi.on("add_dj", _.bind(this._onDjAdded, this));
+        this._ttApi.on("rem_dj", _.bind(this._onDjRemoved, this));
     };
 
     RoomManagementModule.prototype._onEnteredRoom = function (eventData) {
         var self = this;
 
-        self._moderatorIds = eventData.room.moderator_id;
-
         self._resetModule();
+
+        self._moderatorIds = eventData.room.metadata.moderator_id;
 
         eventData.users.forEach(function (userData) {
             var user = new User(userData);
 
-            user.setModerator(_(self._moderatorIds).contains(userData.userid));
+            user.setModerator(self._isModerator.call(self, userData.userid));
 
-            self._users.push(user);
+            self._users[userData.userid] = user;
         });
+
+        eventData.djids.forEach(function (userId) {
+            self._currentDjs.push(self._users[userId]);
+        });
+
+        console.log(self._currentDjs);
     };
 
     RoomManagementModule.prototype._onUserJoined = function (eventData) {
@@ -45,11 +54,11 @@
         eventData.user.forEach(function (userData) {
             var user = new User(userData);
 
-            user.setModerator(_(self._moderatorIds).contains(userData.userid));
+            user.setModerator(self._isModerator.call(self, userData.userid));
 
             // We don't care about us joining the room, it's annoying but we have to check...
             if (user.userId() !== self._botConfig.bot.credentials.userid) {
-                self._users.push(user);
+                self._users[user.userId()] = user;
                 self.emit("userJoined", user);
             }
         });
@@ -60,24 +69,55 @@
 
         eventData.user.forEach(function (userData, index) {
             var user = self._users[userData.userid];
-            self._users.splice(index, 1);
+            delete self._users[userData.userid];
             self.emit("userLeft", user);
         });
     };
 
-    RoomManagementModule.prototype._findUser = function (userId) {
-        for (var i = 0; i < this._users.length; ++i) {
-            if (this._users[i].userId() === userId) {
-                return this._users[i];
+    RoomManagementModule.prototype._onDjAdded = function (eventData) {
+        var self = this;
+
+        eventData.user.forEach(function (user) {
+            var newDj = self._users[user.userid];
+            self._currentDjs.push(newDj);
+            self.emit("djAdded", newDj);
+        });
+    };
+
+    RoomManagementModule.prototype._onDjRemoved = function (eventData) {
+        var self = this;
+
+        eventData.user.forEach(function (user) {
+            var removedDj = self._users[user.userid];
+            self._removeDjFromList.call(self, user.userid);
+            self.emit("djRemoved", removedDj);
+        });
+    };
+
+    RoomManagementModule.prototype._removeDjFromList = function (userId) {
+        for (var i = 0; i < this._currentDjs.length; ++i) {
+            if (this._currentDjs[i].userId() === userId) {
+                this._currentDjs.splice(i, 1);
+                break;
             }
+        }
+    };
+
+    RoomManagementModule.prototype._findUser = function (userId) {
+        if (this._users.hasOwnProperty(userId)) {
+            return this._users[userId];
         }
 
         return null;
     };
 
     RoomManagementModule.prototype._resetModule = function () {
-        this._users = [];
+        this._users = {};
         this._moderatorIds = [];
+    };
+
+    RoomManagementModule.prototype._isModerator = function (userId) {
+        return _(this._moderatorIds).contains(userId) || this._botConfig.bot.admin === userId;
     };
 
     RoomManagementModule.prototype.currentUsers = function () {
