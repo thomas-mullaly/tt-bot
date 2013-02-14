@@ -2,6 +2,7 @@
     "use strict";
 
     var User = require("./../model/User.js");
+    var Song = require("./../model/Song.js");
     var UserSession = require("./../model/UserSession.js");
     var eventEmitter = require('events').EventEmitter;
     var _ = require("underscore");
@@ -124,11 +125,17 @@
     };
 
     RoomManagementModule.prototype._onSongStarted = function (eventData) {
-        console.log(eventData.room.metadata);
+        var song = new Song(eventData.room.metadata.current_song);
+        var dj = this._users[eventData.room.metadata.current_song.djid];
+
+        this.emit("songStarted", dj, song);
     };
 
     RoomManagementModule.prototype._onSongEnded = function (eventData) {
-        console.log(eventData.room.metadata);
+        var song = new Song(eventData.room.metadata.current_song);
+        var dj = this._users[eventData.room.metadata.current_song.djid];
+
+        this.emit("songEnded", dj, song);
     };
 
     RoomManagementModule.prototype._removeDjFromList = function (userId) {

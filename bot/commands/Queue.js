@@ -147,7 +147,7 @@
 
                 // Notify the next person in line that their turn is coming up. (if there is someone).
                 if (self._queue.length > 0) {
-                    chatResponse += " " + self._onDeckTemplate({ user: self._queue[0].userName });
+                    chatResponse += " " + self._onDeckTemplate({ user: self._queue[0] });
                 }
 
                 if (chatResponse) {
@@ -174,20 +174,17 @@
             this._allowNextPersonInQueueToStepUp();
         },
 
-        _onSongEnded: function (data) {
-            var djToRemoveId = data.room.metadata.current_dj;
-            var i;
-
+        _onSongEnded: function (dj, song) {
             if (!this._isQueueOn) {
                 return;
             }
 
-            this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
+            this._lastDj = dj;
 
-            this._ttApi.remDj(djToRemoveId);
+            this._ttApi.remDj(dj.userId);
         },
 
-        _onSongStarted: function (data) {
+        _onSongStarted: function (dj, song) {
             var i;
 
             if (!this._isQueueOn) {
@@ -262,6 +259,7 @@
 
             // Allow them to step up if there's room.
             positionsFilled = this._stepUpQueue.length;
+            console.log(this._stepUpQueue, this._roomManagementModule.currentDj());
             if (this._roomManagementModule.currentDj()) {
                 positionsFilled += 1;
             }
@@ -328,7 +326,7 @@
             for (i = 0; i < this._queue.length; ++i) {
                 if (this._queue[i].userId === data.user.userId) {
                     this._queue.splice(i, 1);
-                    ttApi.speak(this._dequeueTemplate({ user: data }));
+                    ttApi.speak(this._dequeueTemplate({ user: data.user }));
                     return;
                 }
             }
