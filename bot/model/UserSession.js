@@ -1,25 +1,13 @@
 (function () {
     var UserSession = function () {
-        this._playCount = 0;
-        this._isDJing = false;
+        this.playCount = 0;
+        this.isDJing = false;
         this._customDataLookup = {};
     };
 
     UserSession.prototype = {
-        playCount: function () {
-            return this._playCount;
-        },
-
         resetPlayCount: function () {
             this._playCount = 0;
-        },
-
-        isDJing: function () {
-            return this._isDJing;
-        },
-
-        setDJing: function (isDJing) {
-            this._isDJing = isDJing;
         },
 
         addCustomData: function (key, data) {

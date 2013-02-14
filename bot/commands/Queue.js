@@ -1,325 +1,369 @@
 (function () {
+    "use strict";
 
     var _ = require("underscore");
 
-    var QueueCommandHandler = function (roomManagementModule, ttApi) {
+    var QueueCommandHandler = function (roomManagementModule, ttApi, queueConfig) {
         this._roomManagementModule = roomManagementModule;
         this._ttApi = ttApi;
         this._isQueueOn = false;
         this._queue = [];
-        this._registeredToRoomEvents = false;
         this._lastDj = null;
         this._stepUpQueue = [];
         this._currentDjCount = 0;
         this._wasValidStepUp = false;
+
+        this._queueConfig = queueConfig;
+
+        this._stepUpChatTemplate = null;
+        this._dequeueTemplate = null;
+        this._setUpPMTemplate = null;
+        this._onDeckTemplate = null;
+        this._bootTemplate = null;
+        this._escortTemplate = null;
+        this._init();
     };
 
-    QueueCommandHandler.prototype._registerToRoomEvents = function () {
-        if (this._registeredToRoomEvents) {
-            return;
-        }
+    QueueCommandHandler.prototype = {
+        _init: function () {
+            this._registerToRoomEvents();
+            this._setupTemplates();
+        },
 
-        console.log("Registering...");
+        _setupTemplates: function () {
+            this._stepUpChatTemplate = _.template(this._queueConfig.stepUpMessages.chatMessage);
+            this._onDeckTemplate = _.template(this._queueConfig.stepUpMessages.onDeckMessage);
+            this._setUpPMTemplate = _.template(this._queueConfig.stepUpMessages.pmMessage);
+            this._dequeueTemplate = _.template(this._queueConfig.dequeueMessage);
+            this._bootTemplate = _.template(this._queueConfig.escortOptions.bootMessage);
+            this._escortTemplate = _.template(this._queueConfig.escortOptions.escortMessage);
+        },
 
-        this._roomManagementModule.on("songEnded", _.bind(this._onSongEnded, this));
-        this._roomManagementModule.on("songStarted", _.bind(this._onSongStarted, this));
-        this._roomManagementModule.on("djRemoved", _.bind(this._onDjRemoved, this));
-        this._roomManagementModule.on("djAdded", _.bind(this._onDjAdded, this));
-        this._registeredToRoomEvents = true;
-    };
+        _registerToRoomEvents: function () {
+            console.log("Registering...");
 
-    QueueCommandHandler.prototype._onDjAdded = function (data) {
-        var i;
+            this._roomManagementModule.on("songEnded", _.bind(this._onSongEnded, this));
+            this._roomManagementModule.on("songStarted", _.bind(this._onSongStarted, this));
+            this._roomManagementModule.on("djRemoved", _.bind(this._onDjRemoved, this));
+            this._roomManagementModule.on("djAdded", _.bind(this._onDjAdded, this));
+        },
 
-        if (!this._isQueueOn) {
-            return;
-        }
+        _onDjAdded: function (data) {
+            var i;
 
-        for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === data.userId()) {
-                this._stepUpQueue[i].isDJing = true;
-                if (this._stepUpQueue[i].timeoutId) {
-                    clearTimeout(this._stepUpQueue[i].timeoutId);
-                    this._stepUpQueue[i].timeoutId = null;
-                }
+            if (!this._isQueueOn) {
                 return;
             }
-        }
 
-        // If we get here, it wasn't a valid step up. So pull them.
-        this._ttApi.remDj(data.userId());
-        this._ttApi.speak("We're using a queue @" + data.userName() + ". Type '/bert2 q' for a chance to spin.");
-    };
-
-    QueueCommandHandler.prototype._onDjRemoved = function (data) {
-        var self = this;
-        var position = -1;
-        var i;
-
-        if (!self._isQueueOn) {
-            return;
-        }
-
-        // If the last DJ steps down, the next person to step up is the first person in the queue.
-        if (self._lastDj && self._lastDj.userId() === data.userId()) {
-            // Add the user that just DJ'd back into the queue.
-            position = self.addUserToQueue(data);
-            self._ttApi.pm("Thanks for DJing! You've been added to the queue, your current position is " + (position + 1), data.userId());
-            self._lastDj = null;
-
-            self._allowNextPersonInQueueToStepUp();
-        } else {
-            // Check if it was an early step down.
-            for (i = 0; i < self._stepUpQueue.length; ++i) {
-                if (self._stepUpQueue[i].userId === data.userId()) {
-                    self._stepUpQueue[i].isDJing = false;
-                    self._handleEarlyStepDown(self._stepUpQueue[i]);
+            for (i = 0; i < this._stepUpQueue.length; ++i) {
+                if (this._stepUpQueue[i].user.userId === data.userId) {
+                    if (this._stepUpQueue[i].timeoutId) {
+                        clearTimeout(this._stepUpQueue[i].timeoutId);
+                        this._stepUpQueue[i].timeoutId = null;
+                    }
+                    return;
                 }
             }
-        }
-    };
 
-    QueueCommandHandler.prototype._handleEarlyStepDown = function (dj) {
-        var self = this;
-        var pmMessage = "Are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away.";
-        var chatMessage = "@" + dj.userName + " are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away."
+            // If we get here, it wasn't a valid step up. So pull them.
+            this._ttApi.remDj(data.userId);
+            this._ttApi.speak(this._escortTemplate({ user: data }));
+        },
 
-        self._ttApi.pm(pmMessage, dj.userId);
-        self._ttApi.speak(chatMessage);
-
-        dj.timeoutId = setTimeout(function () {
+        _onDjRemoved: function (data) {
+            var self = this;
+            var position = -1;
             var i;
-            // Make sure the user is in the stepUpQueue before allowing a new person to stepup.
-            for (i = 0; i < self._stepUpQueue.length; ++i) {
-                if (self._stepUpQueue[i].userId === dj.userId && !self._stepUpQueue.isDJing) {
-                    // They missed their chance. Move on to the next person.
-                    self._stepUpQueue.splice(i, 1);
-                    self._allowNextPersonInQueueToStepUp.apply(self);
-                }
+
+            if (!self._isQueueOn) {
+                return;
             }
-        }, 30000);
-    };
 
-    QueueCommandHandler.prototype._allowNextPersonInQueueToStepUp = function () {
-        var self = this;
-        var chatResponse = null;
-        var dj;
-        var timeoutId;
+            // If the last DJ steps down, the next person to step up is the first person in the queue.
+            if (self._lastDj && self._lastDj.userId === data.userId) {
+                // Add the user that just DJ'd back into the queue.
+                position = self._addUserToQueue(data);
+                self._ttApi.pm("Thanks for DJing! You've been added to the queue, your current position is " + (position + 1), data.userId);
+                self._lastDj = null;
 
-        if (self._queue.length > 0) {
-            dj = self._queue.splice(0, 1)[0];
-
-            var timeoutId = setTimeout(function (dj) {
-                var i;
-
+                self._allowNextPersonInQueueToStepUp();
+            } else {
+                // Check if it was an early step down.
                 for (i = 0; i < self._stepUpQueue.length; ++i) {
-                    if (self._stepUpQueue[i].userId === dj.userId && !self._stepUpQueue[i].isDJing) {
-                        self._queueStepUpMissed.apply(self, [dj]);
-                        return;
+                    if (self._stepUpQueue[i].user.userId === data.userId) {
+                        self._handleEarlyStepDown(self._stepUpQueue[i]);
                     }
                 }
-            }, 30000, dj);
+            }
+        },
 
-            self._stepUpQueue.push({ userId: dj.userId, userName: dj.userName, isDJing: false, timeoutId: timeoutId });
+        _handleEarlyStepDown: function (dj) {
+            var self = this;
+            var pmMessage = "Are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away.";
+            var chatMessage = "@" + dj.user.userName + " are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away."
 
-            chatResponse = "@" + dj.userName + " it's your turn to spin!";
-            self._ttApi.pm("This is your spot! You have 30 seconds to hop up before I give it away.", dj.userId);
+            self._ttApi.pm(pmMessage, dj.user.userId);
+            self._ttApi.speak(chatMessage);
 
-            // Notify the next person in line that their turn is coming up. (if there is someone).
+            dj.timeoutId = setTimeout(function () {
+                var i;
+                // Make sure the user is in the stepUpQueue before allowing a new person to stepup.
+                for (i = 0; i < self._stepUpQueue.length; ++i) {
+                    if (self._stepUpQueue[i].user.userId === dj.user.userId && !self._isUserDJing(dj.user)) {
+                        // They missed their chance. Move on to the next person.
+                        self._stepUpQueue.splice(i, 1);
+                        self._allowNextPersonInQueueToStepUp.apply(self);
+                    }
+                }
+            }, 30000);
+        },
+
+        _allowNextPersonInQueueToStepUp: function () {
+            var self = this;
+            var chatResponse = null;
+            var dj;
+            var timeoutId;
+
             if (self._queue.length > 0) {
-                chatResponse += " @" + self._queue[0].userName + " you're up next, so get ready!";
+                dj = self._queue.splice(0, 1)[0];
+
+                var timeoutId = setTimeout(function (dj) {
+                    var i;
+
+                    for (i = 0; i < self._stepUpQueue.length; ++i) {
+                        if (self._stepUpQueue[i].user.userId === dj.userId && !self._isUserDJing(self._stepUpQueue[i].user)) {
+                            self._queueStepUpMissed.apply(self, [dj]);
+                            return;
+                        }
+                    }
+                }, self._queueConfig.stepUpTimeout*1000, dj);
+
+                self._stepUpQueue.push({ user: dj, timeoutId: timeoutId });
+
+                var templateData = { user: dj, stepUpTimeout: self._queueConfig.stepUpTimeout };
+
+                chatResponse = self._stepUpChatTemplate(templateData);
+                self._ttApi.pm(self._setUpPMTemplate(templateData), dj.userId);
+
+                // Notify the next person in line that their turn is coming up. (if there is someone).
+                if (self._queue.length > 0) {
+                    chatResponse += " " + self._onDeckTemplate({ user: self._queue[0].userName });
+                }
+
+                if (chatResponse) {
+                    self._ttApi.speak(chatResponse);
+                }
+            }
+        },
+
+        // Fires when a user that was in the queue doesn't stepup in their alotted time period.
+        _queueStepUpMissed: function (dj) {
+            var i;
+
+            // Remove the DJ from the step up queue and tell them they're being dequeued.
+            for (i = 0; i < this._stepUpQueue.length; ++i) {
+                if (this._stepUpQueue[i].user.userId === dj.userId) {
+                    this._stepUpQueue.splice(i, 1);
+
+                    this._ttApi.speak("@" + dj.userName + " you're being dequeued until you're not AFK anymore.");
+                    break;
+                }
             }
 
-            if (chatResponse) {
-                self._ttApi.speak(chatResponse);
+            // Allow the next person inline to stepup.
+            this._allowNextPersonInQueueToStepUp();
+        },
+
+        _onSongEnded: function (data) {
+            var djToRemoveId = data.room.metadata.current_dj;
+            var i;
+
+            if (!this._isQueueOn) {
+                return;
             }
-        }
-    };
 
-    // Fires when a user that was in the queue doesn't stepup in their alotted time period.
-    QueueCommandHandler.prototype._queueStepUpMissed = function (dj) {
-        var i;
+            this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
 
-        // Remove the DJ from the step up queue and tell them they're being dequeued.
-        for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === dj.userId) {
-                this._stepUpQueue.splice(i, 1);
+            this._ttApi.remDj(djToRemoveId);
+        },
 
-                this._ttApi.speak("@" + dj.userName + " you're being dequeued until you're not AFK anymore.");
-                break;
+        _onSongStarted: function (data) {
+            var i;
+
+            if (!this._isQueueOn) {
+                return;
             }
-        }
 
-        // Allow the next person inline to stepup.
-        this._allowNextPersonInQueueToStepUp();
-    };
-
-    QueueCommandHandler.prototype._onSongEnded = function (data) {
-        var djToRemoveId = data.room.metadata.current_dj;
-        var i;
-
-        if (!this._isQueueOn) {
-            return;
-        }
-
-        this._lastDj = this._roomManagementModule.currentListeners()[djToRemoveId];
-
-        this._ttApi.remDj(djToRemoveId);
-    };
-
-    QueueCommandHandler.prototype._onSongStarted = function (data) {
-        var i;
-
-        if (!this._isQueueOn) {
-            return;
-        }
-
-        // Remove the current DJ from the step up queue.
-        for (i = 0; i < this._stepUpQueue.length; ++i) {
-            if (this._stepUpQueue[i].userId === this._roomManagementModule.currentDj().userId()) {
-                this._stepUpQueue.splice(i, 1);
+            // Remove the current DJ from the step up queue.
+            for (i = 0; i < this._stepUpQueue.length; ++i) {
+                if (this._stepUpQueue[i].user.userId === this._roomManagementModule.currentDj().userId) {
+                    this._stepUpQueue.splice(i, 1);
+                }
             }
-        }
-    };
+        },
 
-    QueueCommandHandler.prototype.queueCommand = function (data, ttApi) {
-        if (data.parameters.trim().length === 0) {
-            this.addToQueue(data, ttApi);
-        } else if (data.parameters.trim().toLowerCase() === 'on') {
-            this.queueOn(data, ttApi);
-        } else if (data.parameters.trim().toLowerCase() === 'off') {
-            this.queueOff(data, ttApi);
-        } else {
-            if (data.userId === '509d34f2aaa5cd4b5baab6c2') {
-                ttApi.speak("What? Use your words @" + data.userName + "! Use your words.");
+        queueCommand: function (data, ttApi) {
+            if (data.parameters.trim().length === 0) {
+                this.addToQueue(data, ttApi);
+            } else if (data.parameters.trim().toLowerCase() === 'on') {
+                this.queueOn(data, ttApi);
+            } else if (data.parameters.trim().toLowerCase() === 'off') {
+                this.queueOff(data, ttApi);
             } else {
-                ttApi.speak("You're speaking gibberish, kid.");
+                if (data.user.userId() === '509d34f2aaa5cd4b5baab6c2') {
+                    ttApi.speak("What? Use your words @" + data.user.userName + "! Use your words.");
+                } else {
+                    ttApi.speak("You're speaking gibberish, kid.");
+                }
             }
-        }
-    };
+        },
 
-    QueueCommandHandler.prototype.queueOn = function (data, ttApi) {
-        var self = this;
-        if (this._roomManagementModule.isAdmin(data.userId)) {
-            this._registerToRoomEvents();
-            this._isQueueOn = true;
-            ttApi.speak("The queue has been turned on. Everybody queue up!");
+        queueOn: function (data, ttApi) {
+            var self = this;
+            if (data.user.isModerator) {
+                this._isQueueOn = true;
+                ttApi.speak("The queue has been turned on. Everybody queue up!");
 
-            // Add the current DJs on stage to the stepUp queue.
+                var currentDjs = self._roomManagementModule.currentDjs();
+                var currentDj = self._roomManagementModule.currentDj();
+
+                self._roomManagementModule.currentDjs().forEach(function (dj){
+                    if (currentDj.userId !== dj.userId) {
+                        self._stepUpQueue.push({ user: dj, timeoutId: null });
+                    }
+                });
+            }
+        },
+
+        queueOff: function (data, ttApi) {
+            if (data.user.isModerator) {
+                this._isQueueOn = false;
+                this._queue = [];
+                this._stepUpQueue = [];
+                this._lastDj = null;
+                ttApi.speak("The queue has been turned off.");
+            }
+        },
+
+        addToQueue: function (data, ttApi) {
+            var position = -1;
+            var positionsFilled = -1;
             var currentDjs = this._roomManagementModule.currentDjs();
 
-            currentDjs.forEach(function (djId){
-                var dj = self._roomManagementModule.currentListeners()[djId];
-                if (self._roomManagementModule.currentDj().userId() !== djId) {
-                    self._stepUpQueue.push({ userId: dj.userId(), userName: dj.userName(), isDJing: true, timeoutId: null });
-                }
-            });
-        }
-    };
-
-    QueueCommandHandler.prototype.queueOff = function (data, ttApi) {
-        if (this._roomManagementModule.isAdmin(data.userId)) {
-            this._isQueueOn = false;
-            this._queue = [];
-            this._stepUpQueue = [];
-            this._lastDj = null;
-            ttApi.speak("The queue has been turned off.");
-        }
-    };
-
-    QueueCommandHandler.prototype.addToQueue = function (data, ttApi) {
-        var position = -1;
-        var positionsFilled = -1;
-
-        if (!this._isQueueOn) {
-            ttApi.speak("The queue isn't currently enabled @" + data.userName + ". Feel free to hop up when there's an opening!");
-            return;
-        } else if (this._roomManagementModule.currentDjs().indexOf(data.userId) > -1) {
-            ttApi.speak("What? Now you want to take two DJ spots on stage @" + data.userName + "?");
-            return;
-        }
-
-        position = this.addUserToQueue(data);
-
-        // Allow them to step up if there's room.
-        positionsFilled = this._stepUpQueue.length;
-        if (this._roomManagementModule.currentDj()) {
-            positionsFilled += 1;
-        }
-        if (positionsFilled < 5) {
-            this._allowNextPersonInQueueToStepUp();
-        } else {
-            ttApi.speak("@" + data.userName + ", you've been added to queue. Your current position is " + (position + 1));
-        }
-    };
-
-    QueueCommandHandler.prototype.addUserToQueue = function (userInfo) {
-        var i, position = -1;
-
-        // Check if the user is in the queue.
-        for (i = 0; i < this._queue.length; ++i) {
-            if (this._queue[i].userId === userInfo.userId()) {
-                position = i;
-                break;
+            if (!this._isQueueOn) {
+                ttApi.speak("The queue isn't currently enabled @" + data.user.userName + ". Feel free to hop up when there's an opening!");
+                return;
+            } else if (this._isUserDJing(data.user)) {
+                ttApi.speak("What? Now you want to take two DJ spots on stage @" + data.user.userName + "?");
+                return;
             }
-        }
 
-        // Add the user if they're not in the queue.
-        if (position === -1) {
-            this._queue.push({ userId: userInfo.userId, userName: userInfo.userName });
-            position = this._queue.length-1;
-        }
+            position = this._addUserToQueue(data.user);
 
-        return position;
-    };
-
-    QueueCommandHandler.prototype.listQueue = function (data, ttApi) {
-        var usersInQueue = null;
-        var usersInStepUpQueue = null;
-        var timeoutLength = 1;
-
-        if (this._isQueueOn) {
-            usersInQueue = _(this._queue).pluck('userName');
-            usersInStepUpQueue = _.chain(this._stepUpQueue).where({ isDJing: false }).pluck('userName');
-            if (usersInQueue.length === 0 && usersInStepUpQueue.length === 0) {
-                ttApi.speak("No one is currently in the queue.");
+            // Allow them to step up if there's room.
+            positionsFilled = this._stepUpQueue.length;
+            if (this._roomManagementModule.currentDj()) {
+                positionsFilled += 1;
+            }
+            if (positionsFilled < 5) {
+                this._allowNextPersonInQueueToStepUp();
             } else {
-                if (usersInStepUpQueue.length > 0) {
-                    ttApi.speak("Waiting on: " + usersInStepUpQueue.join(", "));
-                    timeoutLength = 250;
-                }
+                ttApi.speak("@" + data.user.userName + ", you've been added to queue. Your current position is " + (position + 1));
+            }
+        },
 
-                if (usersInQueue.length > 0) {
-                    setTimeout(function () {
-                        ttApi.speak("In queue: " + usersInQueue.join(", "));
-                    }, timeoutLength);
+        _addUserToQueue: function (userInfo) {
+            var i, position = -1;
+
+            // Check if the user is in the queue.
+            for (i = 0; i < this._queue.length; ++i) {
+                if (this._queue[i].userId === userInfo.userId) {
+                    position = i;
+                    break;
                 }
             }
-        }
-    };
 
-    QueueCommandHandler.prototype.dequeue = function (data, ttApi) {
-        var usersInQueue, position;
+            // Add the user if they're not in the queue.
+            if (position === -1) {
+                this._queue.push(userInfo);
+                position = this._queue.length-1;
+            }
 
-        if (!this._isQueueOn) {
-            ttApi.speak("The queue's not enabled. You're drunk @" + data.userName + ". Go home.");
-        }
+            return position;
+        },
 
-        usersInQueue = _(this._queue).pluck('userId');
-        position = _(usersInQueue).indexOf(data.userId);
+        listQueue: function (data, ttApi) {
+            var usersInQueue = null;
+            var usersInStepUpQueue = null;
+            var timeoutLength = 1;
 
-        if (position > -1) {
-            this._queue.splice(position, 1);
-            ttApi.speak("@" + data.userName + ", you've been dequeued.");
+            if (this._isQueueOn) {
+                usersInQueue = this._usersInQueue();
+                usersInStepUpQueue = _.chain(this._stepUpQueue).where({ isDJing: false }).pluck('userName');
+                if (usersInQueue.length === 0 && usersInStepUpQueue.length === 0) {
+                    ttApi.speak("No one is currently in the queue.");
+                } else {
+                    if (usersInStepUpQueue.length > 0) {
+                        ttApi.speak("Waiting on: " + usersInStepUpQueue.join(", "));
+                        timeoutLength = 250;
+                    }
+
+                    if (usersInQueue.length > 0) {
+                        setTimeout(function () {
+                            ttApi.speak("In queue: " + usersInQueue.join(", "));
+                        }, timeoutLength);
+                    }
+                }
+            }
+        },
+
+        dequeue: function (data, ttApi) {
+            var i;
+
+            if (!this._isQueueOn) {
+                ttApi.speak("The queue's not enabled. You're drunk @" + data.user.userName + ". Go home.");
+            }
+
+            console.log(this._queue, this._stepUpQueue, data);
+            for (i = 0; i < this._queue.length; ++i) {
+                if (this._queue[i].userId === data.user.userId) {
+                    this._queue.splice(i, 1);
+                    ttApi.speak(this._dequeueTemplate({ user: data }));
+                    return;
+                }
+            }
+
+            for (i = 0; i < this._stepUpQueue.length; ++i) {
+                if (this._stepUpQueue[i].user.userId === data.user.userId) {
+                    if (this._stepUpQueue[i].timeoutId) {
+                        clearTimeout(this._stepUpQueue[i].timeoutId);
+                    }
+                    this._stepUpQueue.splice(i, 1);
+                    this._allowNextPersonInQueueToStepUp();
+                    ttApi.speak(this._dequeueTemplate({ user: data.user }));
+                    return;
+                }
+            }
+        },
+
+        _usersInQueue: function () {
+            var users = [];
+            for (var i = 0; i < this._queue.length; ++i) {
+                users.push(this._queue[i].userName);
+            }
+        },
+
+        _isUserDJing: function (user) {
+            return user.userSession && user.userSession.isDJing;
         }
     };
 
     exports.attachCommandHandler = function (commandsModule, ttApi, botConfig) {
-        var queueCommandHandler = new QueueCommandHandler(commandsModule.roomManagementModule(), ttApi);
+        var queueCommandHandler = new QueueCommandHandler(commandsModule.roomManagementModule(), ttApi, botConfig.queue);
 
-        //commandsModule.registerCommandHandler({ botSpecific: true, command: "q" }, _.bind(queueCommandHandler.queueCommand, queueCommandHandler));
-        //commandsModule.registerCommandHandler({ botSpecific: true, command: "list"}, _.bind(queueCommandHandler.listQueue, queueCommandHandler));
-        //commandsModule.registerCommandHandler({ botSpecific: true, command: "dq"}, _.bind(queueCommandHandler.dequeue, queueCommandHandler));
+        commandsModule.registerCommandHandler({ botSpecific: true, command: "q" }, _.bind(queueCommandHandler.queueCommand, queueCommandHandler));
+        commandsModule.registerCommandHandler({ botSpecific: true, command: "list"}, _.bind(queueCommandHandler.listQueue, queueCommandHandler));
+        commandsModule.registerCommandHandler({ botSpecific: true, command: "dq"}, _.bind(queueCommandHandler.dequeue, queueCommandHandler));
     };
 
 })();

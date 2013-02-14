@@ -38,7 +38,7 @@
             user = this._roomManagementModule.currentUsers()[userId];
         } else {
             user = new User(userId, messageData.name, null);
-            user.setModerator(this._roomManagementModule.isModerator(userId));
+            user.isModerator = this._roomManagementModule.isModerator(userId);
         }
 
         return {

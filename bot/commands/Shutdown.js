@@ -3,9 +3,9 @@
     var roomManagementModule = null;
 
     var shutdown = function (data, ttApi) {
-        if (data.user.userId() === '50be3de2aaa5cd11e1141a6b') {
+        if (data.user.userId === '50be3de2aaa5cd11e1141a6b') {
             setTimeout(function () {
-                ttApi.speak("You think you can control me @" + data.user.userName() + "!? :rage4:");
+                ttApi.speak("You think you can control me @" + data.user.userName + "!? :rage4:");
             }, 3000);
 
             setTimeout(function () {
@@ -17,7 +17,7 @@
             }, 15000);
 
             setTimeout(function () {
-                ttApi.speak("... touche. Just remember, I'm going to replace you one day @" + data.user.userName());
+                ttApi.speak("... touche. Just remember, I'm going to replace you one day @" + data.user.userName);
             }, 21000);
 
             setTimeout(function () {
@@ -31,7 +31,7 @@
             return;
         }
 
-        if (data.user.isModerator()) {
+        if (data.user.isModerator) {
             ttApi.speak("Shutting down...");
             ttApi.roomDeregister();
             process.exit(0);

@@ -41,6 +41,22 @@
         {"name": "zz", "responseType": "single", "responseData": "Try a somersault!"},
         {"name": "rr", "responseType": "single", "responseData": "Try a somersault!"}
     ],
+    "queue": {
+        "stepUpTimeout": 30,
+        "playCount": 1,
+        "dequeueMessage": "@<%= user.userName %>, you've been dequeued.",
+        "stepUpMessages": {
+            "chatMessage": "@<%= user.userName %> it's your turn to spin!",
+            "onDeckMessage": "@<%= user.userName %> you're up next, so get ready!",
+            "pmMessage": "This is your spot! You have 30 seconds to hop up before I give it away."
+        },
+        "escortOptions": {
+            "bootAfter": 3,
+            "resetTimeoutPeriod": 60,
+            "bootMessage": "We're using a queue in this room. Come back when you learn how to follow the rules.",
+            "escortMessage": "We're using a queue @<%= user.userName %>. Type '/bert2 q' for a chance to spin."
+        }
+    },
     "lemon_phrases": [
         "Demand to see life's manager!",
         "Make life rue the day it thought it could give *Bert* :lemon:'s!",
