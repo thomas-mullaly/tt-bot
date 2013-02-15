@@ -21,6 +21,8 @@
         this._onDeckTemplate = null;
         this._bootTemplate = null;
         this._escortTemplate = null;
+        this._stepDownChatTemplate = null;
+        this._stepDownPMTemplate = null;
         this._init();
     };
 
@@ -37,15 +39,41 @@
             this._dequeueTemplate = _.template(this._queueConfig.dequeueMessage);
             this._bootTemplate = _.template(this._queueConfig.escortOptions.bootMessage);
             this._escortTemplate = _.template(this._queueConfig.escortOptions.escortMessage);
+            this._stepDownChatTemplate = _.template(this._queueConfig.stepDownMessages.chatMessage);
+            this._stepDownPMTemplate = _.template(this._queueConfig.stepDownMessages.pmMessage);
         },
 
         _registerToRoomEvents: function () {
             console.log("Registering...");
 
+            this._roomManagementModule.on("enteredRoom", _.bind(this._onEnteredRoom, this));
+            this._roomManagementModule.on("userJoined", _.bind(this._onUserJoined, this));
             this._roomManagementModule.on("songEnded", _.bind(this._onSongEnded, this));
             this._roomManagementModule.on("songStarted", _.bind(this._onSongStarted, this));
             this._roomManagementModule.on("djRemoved", _.bind(this._onDjRemoved, this));
             this._roomManagementModule.on("djAdded", _.bind(this._onDjAdded, this));
+        },
+
+        _attachCustomData: function () {
+            var self = this;
+            var keys = _.keys(this._roomManagementModule.currentUsers());
+
+            keys.forEach(function (userId) {
+                var user = self._roomManagementModule.currentUsers()[userId];
+
+                // Make sure it's not already there.
+                if (!user.userSession.customData("queue")) {
+                    user.userSession.addCustomData("queue", { escortCount: 0, escortResetTimeoutId: null });
+                }
+            });
+        },
+
+        _onEnteredRoom: function () {
+            this._attachCustomData();
+        },
+
+        _onUserJoined: function (user) {
+            user.userSession.addCustomData("queue", { escortCount: 0, escortResetTimeoutId: null });
         },
 
         _onDjAdded: function (data) {
@@ -66,8 +94,7 @@
             }
 
             // If we get here, it wasn't a valid step up. So pull them.
-            this._ttApi.remDj(data.userId);
-            this._ttApi.speak(this._escortTemplate({ user: data }));
+            this._escort(data);
         },
 
         _onDjRemoved: function (data) {
@@ -97,10 +124,32 @@
             }
         },
 
+        _escort: function (dj) {
+            this._ttApi.remDj(dj.userId);
+            this._ttApi.speak(this._escortTemplate({ user: dj }));
+
+            var queueData = dj.userSession.customData("queue");
+            if (queueData) {
+                queueData.escortCount += 1;
+                if (queueData.escortCount >= this._queueConfig.escortOptions.bootAfter) {
+                    clearTimeout(this._queueConfig.escortResetTimeoutId);
+                    this._roomManagementModule.bootUser(dj.userId, this._bootTemplate({ user: dj }));
+                } else {
+                    if (queueData.escortResetTimeoutId) {
+                        clearTimeout(queueData.escortResetTimeoutId);
+                    }
+                    queueData.escortResetTimeoutId = setTimeout(function () {
+                        queueData.escortCount = 0;
+                        queueData.escortResetTimeoutId = null;
+                    }, this._queueConfig.escortOptions.resetTimeoutPeriod*1000);
+                }
+            }
+        },
+
         _handleEarlyStepDown: function (dj) {
             var self = this;
-            var pmMessage = "Are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away.";
-            var chatMessage = "@" + dj.user.userName + " are you sure you want to step down? I'll hold your spot for 30 seconds before I give it away."
+            var pmMessage = self._stepDownPMTemplate({ user: dj.user, stepUpTimeout: this._queueConfig.stepUpTimeout });
+            var chatMessage = self._stepDownChatTemplate({ user: dj.user, stepUpTimeout: this._queueConfig.stepUpTimeout });
 
             self._ttApi.pm(pmMessage, dj.user.userId);
             self._ttApi.speak(chatMessage);
@@ -115,7 +164,7 @@
                         self._allowNextPersonInQueueToStepUp.apply(self);
                     }
                 }
-            }, 30000);
+            }, this._queueConfig.stepUpTimeout*1000);
         },
 
         _allowNextPersonInQueueToStepUp: function () {
@@ -207,7 +256,7 @@
             } else if (data.parameters.trim().toLowerCase() === 'off') {
                 this.queueOff(data, ttApi);
             } else {
-                if (data.user.userId() === '509d34f2aaa5cd4b5baab6c2') {
+                if (data.user.userId === '509d34f2aaa5cd4b5baab6c2') {
                     ttApi.speak("What? Use your words @" + data.user.userName + "! Use your words.");
                 } else {
                     ttApi.speak("You're speaking gibberish, kid.");
@@ -219,7 +268,7 @@
             var self = this;
             if (data.user.isModerator) {
                 this._isQueueOn = true;
-                ttApi.speak("The queue has been turned on. Everybody queue up!");
+                ttApi.speak("The queue has been turned on. Hide yo kids, hide yo wife, and queue up!");
 
                 var currentDjs = self._roomManagementModule.currentDjs();
                 var currentDj = self._roomManagementModule.currentDj();
@@ -258,12 +307,7 @@
             position = this._addUserToQueue(data.user);
 
             // Allow them to step up if there's room.
-            positionsFilled = this._stepUpQueue.length;
-            console.log(this._stepUpQueue, this._roomManagementModule.currentDj());
-            if (this._roomManagementModule.currentDj()) {
-                positionsFilled += 1;
-            }
-            if (positionsFilled < 5) {
+            if (this._roomManagementModule.currentDjs().length + this._stepUpQueue.length < 5) {
                 this._allowNextPersonInQueueToStepUp();
             } else {
                 ttApi.speak("@" + data.user.userName + ", you've been added to queue. Your current position is " + (position + 1));

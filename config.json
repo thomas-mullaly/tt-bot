@@ -44,11 +44,15 @@
     "queue": {
         "stepUpTimeout": 30,
         "playCount": 1,
-        "dequeueMessage": "@<%= user.userName %>, you've been dequeued.",
+        "dequeueMessage": "@<%= user.userName %>, you've been dequeued. Thanks for hanging out with us!",
         "stepUpMessages": {
             "chatMessage": "@<%= user.userName %> it's your turn to spin!",
             "onDeckMessage": "@<%= user.userName %> you're up next, so get ready!",
-            "pmMessage": "This is your spot! You have 30 seconds to hop up before I give it away."
+            "pmMessage": "This is your spot! You have <%= stepUpTimeout %> seconds to hop up before I give it away."
+        },
+        "stepDownMessages": {
+            "chatMessage": "Are you sure you want to step down @<%= user.userName %>? I'll hold your spot for <%= stepUpTimeout %> seconds.",
+            "pmMessage": "Are you sure you want to step down before it's your turn to spin? I'll hold your spot for <%= stepUpTimeout %> seconds."
         },
         "escortOptions": {
             "bootAfter": 3,

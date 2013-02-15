@@ -54,6 +54,8 @@
 
             self._currentDjs.push(dj);
         });
+
+        this.emit("enteredRoom");
     };
 
     RoomManagementModule.prototype._onUserJoined = function (eventData) {
@@ -182,6 +184,10 @@
 
     RoomManagementModule.prototype.isUserInRoom = function (userId) {
         return this._findUser(userId) !== null;
+    };
+
+    RoomManagementModule.prototype.bootUser = function (userId, reason) {
+        this._ttApi.boot(userId, reason);
     };
 
     module.exports = RoomManagementModule;
